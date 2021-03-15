@@ -165,6 +165,7 @@ function removeAllChildElements(Element){
 /**
  * ```targetElement```内のすべての要素を取得(どれだけ階層が下でも兎に角全部)
  * @param {Element} targetElement 
+ * @returns {Array}
  */
 function getAllChildren(targetElement){
     let result = Array();

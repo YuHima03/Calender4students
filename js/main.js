@@ -225,7 +225,7 @@ function removeUnit(str){
 }
 
 /**
- * @classdesc 要素の中の特定の値を保存
+ * @classdesc 要素の中の特定の値を保存する
  */
 class saveElementValue{
     static SIZE = ["clientWidth", "clientHeight", "offsetWidth", "offsetHeight", "scrollWidth", "scrollHeight"];

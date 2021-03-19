@@ -224,6 +224,53 @@ function removeUnit(str){
     return Number(str.match(/[\d\.]*/)[0]);
 }
 
+/**
+ * @classdesc 要素の中の特定の値を保存
+ */
+class saveElementValue{
+    static SIZE = ["clientWidth", "clientHeight", "offsetWidth", "offsetHeight", "scrollWidth", "scrollHeight"];
+    static SCROLL = ["scrollTop", "scrollLeft"];
+    static MARGIN = ["style.marginTop", "style.marginRight", "style.marginBottom", "style.marginLeft"];
+
+    /**
+     * @param {(Element|string)} targetElement 
+     * @param {...string} key 
+     */
+    constructor(targetElement, ...key){
+        /**@type {Array.<string>} */
+        this._keys = [...key];
+
+        /**@type {Element} */
+        this._element = (targetElement instanceof Element) ? targetElement : document.querySelector(targetElement);
+
+        /**@type {Object.<string, (string|number|boolean|null|undefined)>} */
+        this.data = {};
+
+        this.updateData();
+    }
+
+    /**
+     * 更新
+     * @param  {...string} keys 
+     */
+    updateData(...keys){
+        keys = ([...keys].length > 0) ? [...keys] : this._keys;
+
+        keys.forEach(key => {
+            let data = this._element;
+            let keyList = key.split(/\./);
+
+            for(let i = 0; i < keyList.length; i++){
+                data = data[keyList[i]];
+            }
+
+            this.data[key] = data;
+        });
+
+        return this.data;
+    }
+}
+
 /// DOMツリー読み込み後実行 ///
 $(function(){
     //a要素のセキュリティ対策

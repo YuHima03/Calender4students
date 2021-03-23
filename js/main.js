@@ -198,7 +198,7 @@ function getAllParents(targetElement){
     }
     else{
         //もうこれ以上親要素がない
-        return Array();
+        return [];
     }
 }
 
@@ -269,6 +269,36 @@ class saveElementValue{
 
         return this.data;
     }
+}
+
+/**
+ * ```msec```ミリ秒松
+ * ```async```を使った関数内でのみ```await wait()```で利用可能
+ * @param {Number} msec 
+ * @returns {Promise}
+ */
+function wait(msec){
+    return new Promise((resolve, reject) => {
+        setTimeout(resolve, msec);
+    });
+}
+
+/**
+ * 
+ * @param {Array} array 
+ * @param {!number} i 
+ * @param {!number} j 
+ * @returns {Array}
+ */
+function swapArrayValue(array, i, j){
+    if(i < 0) i += array.length;
+    if(j < 0) j += array.length;
+
+    let tmp = array[i];
+    array[i] = array[j];
+    array[j] = tmp;
+
+    return array;
 }
 
 /// DOMツリー読み込み後実行 ///

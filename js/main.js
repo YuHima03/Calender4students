@@ -14,14 +14,21 @@ function isset(d){
 }
 
 /**setAttributeを複数回一度に実行 
- * @param E Element
- * @param value {name:value, ...}
+ * @param {HTMLElement} E Element
+ * @param {Object.<string, string>} value {name:value, ...}
  */
 function setAttrs(E, value){
-    let arr = Object.entries(value);
-    arr.forEach((v) => {
-        E.setAttribute(arr[0], arr[1]);
+    /**@type {Array.<[string, string]>} */
+    let arr = [];
+    Object.keys(value).forEach(key => {
+        arr.push(key, value[key]);
     });
+
+    arr.forEach((v) => {
+        E.setAttribute(v[0], v[1]);
+    });
+
+    return;
 }
 
 /** 一時的に使うフォーム要素を作成*/
@@ -67,10 +74,10 @@ function rand_text(len = 64){
 
 /**
  * Dateオブジェクトを連想配列にする
- * @param {Object} DateObject 
+ * @param {Date} DateObject 
  * @param {Boolean} UTC UTC時間を返す
  * @param {Boolean} noMonthZero //月を1~12にする
- * @returns {Object} 連想配列
+ * @returns {{year: !number, month: !number, date: !number, day: !number, hours: !number, minutes: !number, seconds: !number, milliseconds: !number}} 連想配列
  */
 function dateToAssociativeArray(DateObject = undefined, UTC = false, noMonthZero = true){
     let now = (isset(DateObject)) ? DateObject : new Date();
@@ -100,6 +107,7 @@ function dateToAssociativeArray(DateObject = undefined, UTC = false, noMonthZero
  * その月の初日の曜日を取得
  * @param {Number} year 
  * @param {Number} month 
+ * @returns {number}
  */
 function getFirstDay(year, month){
     let date = new Date(year, month-1, 1);
@@ -111,6 +119,7 @@ function getFirstDay(year, month){
  * @param {Number} year 
  * @param {Number} month 
  * @param {Boolean} day 日付じゃなくて曜日を取得
+ * @returns {number}
  */
 function getFinalDate(year, month, day = false){
     let date = new Date(year, month, 0);
@@ -121,7 +130,7 @@ function getFinalDate(year, month, day = false){
  * UTC時間からホストシステム側の時間に変換
  * @param {Object} DateObject Dateオブジェクト
  * @param {Number} timezoneOffset UTC時間からの差(UTC+9だったら9)
- * @returns {Object} Dateオブジェクト
+ * @returns {Date} Dateオブジェクト
  */
 function UTCToClientTimezone(DateObject = undefined, timezoneOffset = undefined){
     let now = (isset(DateObject)) ? DateObject : new Date();
@@ -153,6 +162,7 @@ function valueBetween(value, from, to, includeEqual = true){
 /**
  * Element の中の全要素削除
  * @param {Element} Element Target Element (Parent)
+ * @returns {boolean} 成功したか否か
  */
 function removeAllChildElements(Element){
     while(Element.firstChild){
@@ -165,10 +175,11 @@ function removeAllChildElements(Element){
 /**
  * ```targetElement```内のすべての要素を取得(どれだけ階層が下でも兎に角全部)
  * @param {Element} targetElement 
- * @returns {Array}
+ * @returns {Array.<HTMLElement>}
  */
 function getAllChildren(targetElement){
-    let result = Array();
+    /**@type {Array.<HTMLElement>} */
+    let result = [];
     let childElements = targetElement.children;
 
     for(let i = 0; i < childElements.length; i++){
@@ -188,7 +199,7 @@ function getAllChildren(targetElement){
 /**
  * ```targetElement```に関わる全ての親要素の取得(htmlまでいく)
  * @param {Element} targetElement 
- * @returns {Array} 添え字0の値は```HTMLElement```になってるはず
+ * @returns {Array.<HTMLElement>} 添え字0の値は```HTMLElement```になってるはず
  */
 function getAllParents(targetElement){
     let parentElement = targetElement.parentElement;
@@ -204,8 +215,9 @@ function getAllParents(targetElement){
 
 /**
  * ```a≡k (mod b)```の```k(余り)```を返す(正の数)
- * @param {Number} a 
- * @param {Number} b 
+ * @param {!Number} a 
+ * @param {!Number} b 
+ * @returns {!number}
  */
 function mod(a, b){
     return (

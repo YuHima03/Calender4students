@@ -173,23 +173,21 @@ function removeAllChildElements(Element){
 }
 
 /**
- * ```targetElement```内のすべての要素を取得(どれだけ階層が下でも兎に角全部)
+ * `targetElement`内のすべての要素を取得(どれだけ階層が下でも兎に角全部)
  * @param {Element} targetElement 
  * @returns {Array.<HTMLElement>}
  */
 function getAllChildren(targetElement){
     /**@type {Array.<HTMLElement>} */
     let result = [];
-    let childElements = targetElement.children;
+    let childElements = [...targetElement.children];
 
-    for(let i = 0; i < childElements.length; i++){
+    for(let i = 0; i < targetElement.childElementCount; i++){
         let elem = childElements[i];
         result.push(elem);
         
-        if(elem.children.length > 0){
-            getAllChildren(elem).forEach(v => {
-                result.push(v);
-            });
+        if(elem.childElementCount > 0){
+            result.push(...getAllChildren(elem));
         }
     }
 
@@ -197,9 +195,9 @@ function getAllChildren(targetElement){
 }
 
 /**
- * ```targetElement```に関わる全ての親要素の取得(htmlまでいく)
+ * `targetElement`に関わる全ての親要素の取得(htmlまでいく)
  * @param {Element} targetElement 
- * @returns {Array.<HTMLElement>} 添え字0の値は```HTMLElement```になってるはず
+ * @returns {Array.<HTMLElement>} 添え字0の値は`HTMLElement`になってるはず
  */
 function getAllParents(targetElement){
     let parentElement = targetElement.parentElement;
@@ -214,7 +212,7 @@ function getAllParents(targetElement){
 }
 
 /**
- * ```a≡k (mod b)```の```k(余り)```を返す(正の数)
+ * `a≡k (mod b)`の`k(余り)`を返す(正の数)
  * @param {!Number} a 
  * @param {!Number} b 
  * @returns {!number}
@@ -228,7 +226,7 @@ function mod(a, b){
 }
 
 /**
- * ```str```の単位のみを取り除く
+ * `str`の単位のみを取り除く
  * @param {String} str 
  * @returns {Number}
  */
@@ -284,8 +282,8 @@ class saveElementValue{
 }
 
 /**
- * ```msec```ミリ秒松
- * ```async```を使った関数内でのみ```await wait()```で利用可能
+ * `msec`ミリ秒松
+ * `async`を使った関数内でのみ`await wait()`で利用可能
  * @param {Number} msec 
  * @returns {Promise}
  */

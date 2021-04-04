@@ -59,11 +59,11 @@ else{
         </div>
         <div id="create_form">
             <form id="create_account" name="create_account" action="" method="POST" >
-                <p>ID<span>※4~32文字で、英数字(A~Z,a~z,0~9)と'_'(アンダーバー)が利用可能です</span></p>
+                <p>ID<span class="small">※4~32文字で、英数字(A~Z,a~z,0~9)と'_'(アンダーバー)が利用可能です</span></p>
                 <input type="text" name="_NAME" value="" required />
-                <p>パスワード<span>※6~32文字で、英文字(A~Z,a~z)と数字(0~9)を共に含んでいる必要があります</span></p>
+                <p>パスワード<span class="small">※6~32文字で、英文字(A~Z,a~z)と数字(0~9)を共に含んでいる必要があります</span></p>
                 <input type="password" name="_PASS" required />
-                <p>パスワード(確認)<span>※クリップボードからの貼り付けは出来ません</span></p>
+                <p>パスワード(確認)<span class="small">※クリップボードからの貼り付けは出来ません</span></p>
                 <input type="password" name="_PASS_CHK" onpaste="return false;" required />
                 <input type="hidden" name="_TOKEN" value="<?=$form_token?>" />
                 <input type="submit" value="作成" />

@@ -1,0 +1,42 @@
+/* 以下に Calender4Students(名称未定) のｋ本的な構造を示す */
+
+root
+    app -- アプリに関する部分
+        sw.js -- Service Worker
+
+    data -- 情報いろいろ (全部暗号化済み & 外部からのアクセス不可(PHPを通して情報取得))
+        ??
+
+    lang -- 言語ファイル
+        ??.json
+
+    libs -- ライブラリ
+        main.php -- 殆どのページに使われる主要関数(クラス)群
+        page.php -- ページ生成に係る関数(クラス)群
+        account.php -- アカウント情報の管理に関する関数(クラス)群
+        db.php -- データベース操作に関する関数(クラス)群
+
+    login -- ログインページ
+        index.php
+
+    logout -- ログアウト(アクセスするだけでログアウト処理を実行)
+        index.php
+
+
+/* 以下にデータベースの構造を示す */
+
+C4S (root)
+    account -- アカウント情報
+        * uuid      varchar(16)     PRIMARY     -- 内部識別用
+        * name      varchar(256)    UNIQUE      -- ログイン時に使用するID
+        * pass      varchar(128)    NOT NULL    -- sha512で暗号化
+        * birthday  date                        -- 誕生日 (NULLの場合は未設定)
+        * email     varchar(256)    UNIQUE      -- メールアドレス (重複不可)
+        * unclaimed boolean                     -- 仮登録のときはtrue
+
+    login_session -- ログインのセッション情報
+        * uuid          varchar(16) NOT NULL    -- 複数ログインの場合もあるので重複可
+        * start_date    date        NOT NULL    -- セッション開始日(セッション切れ判定用)
+        * session_token varchar(64) PRIMARY     -- sha256で暗号化
+        * cookie_token  varchar(64) PRIMARY     -- sha256...
+        * auto_login    boolean     NOT NULL    -- 自動ログイン

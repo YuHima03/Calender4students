@@ -1,6 +1,12 @@
 <?php
 
+/**
+ * いろんなページへの相対パスの取得
+ */
 class URI{
+    /**
+     * 相対パス
+     */
     static public function RELATIVE_PATH() : string{
         preg_match_all("/\//", $_SERVER["SCRIPT_NAME"], $result, PREG_SET_ORDER);
         return "./".str_repeat("../", sizeof($result) - 1);

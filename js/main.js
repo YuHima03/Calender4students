@@ -231,7 +231,16 @@ function mod(a, b){
  * @returns {Number}
  */
 function removeUnit(str){
-    return Number(str.match(/[\d\.]*/)[0]);
+    switch(typeof(str)){
+        case("number"):
+            return str;
+            
+        case("string"):
+            return Number(str.match(/[\d\.]*/)[0]);
+
+        default:
+            return undefined;
+    }
 }
 
 /**
@@ -265,7 +274,7 @@ class saveElementValue{
      */
     updateData(...keys){
         keys = ([...keys].length > 0) ? [...keys] : this._keys;
-
+        
         keys.forEach(key => {
             let data = this._element;
             let keyList = key.split(/\./);
@@ -311,11 +320,45 @@ function swapArrayValue(array, i, j){
     return array;
 }
 
+/**
+ * addEventListenerでselectstartに設定するやつ
+ * @param {Event} ev 
+ */
+function selectBlocker(ev){
+    ev.preventDefault();
+}
+
 /// DOMツリー読み込み後実行 ///
-$(function(){
-    //a要素のセキュリティ対策
-    document.querySelectorAll("a[target='_blank']").forEach((E) => {
-        E.setAttribute('rel', "noopener noreferrer");
+window.addEventListener("load", () => {
+    //いろいろ定義
+    let customElements = window.customElements;
+    customElements.define("linkto-def",
+        class defElement extends HTMLElement {
+            constructor(){
+                super();
+                this.style.display = 'none';
+            }
+        }
+    );
+
+    /**@type {Object.<string, !string>} */
+    let linktoDefineList = {};
+    [...document.getElementsByTagName("linkto-def")].forEach(element => {
+        let dataset = element.dataset;
+        linktoDefineList[dataset["name"]] = dataset["linkto"];
+    });
+
+    //a要素
+    [...document.getElementsByTagName("a")].forEach((E) => {
+        if(isset(E.dataset["linkto"])){
+            //リンク設定
+            E.setAttribute("href", linktoDefineList[E.dataset["linkto"]]);
+        }
+
+        if(E.getAttribute("target") === '_blank'){
+            //セキュリティ対策
+            E.setAttribute('rel', "noopener noreferrer");
+        }
     });
 
     //ボタン要素にdata-gotoがある場合はそこに移動するようにする

@@ -5,7 +5,8 @@ root
         sw.js -- Service Worker
 
     data -- 情報いろいろ (全部暗号化済み & 外部からのアクセス不可(PHPを通して情報取得))
-        ??
+        ?? -- uuid形式のファイル名
+            
 
     lang -- 言語ファイル
         ??.json

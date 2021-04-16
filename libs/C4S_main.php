@@ -61,7 +61,7 @@ class page{
         setcookie("_lang", $lang, 0, "/");
 
         //言語データ取得
-        $this->lang_data = json_decode(file_get_contents("{$this->relPATH}lang/{$lang}.json"), true);
+        $this->lang_data = json_decode(file_get_contents("{$this->relPATH}/lang/{$lang}.json"), true);
     }
 
     public function set_info($arr){
@@ -100,7 +100,7 @@ class page{
         $mode_list = ["head", "body"];
 
         if(in_array($mode, $mode_list, true)){
-            include "{$this->relPATH}include/{$mode}.php";
+            include "{$this->relPATH}/include/{$mode}.php";
         }
         //print_all
         else if($mode === "_ALL"){
@@ -378,7 +378,7 @@ class database{
 
     function __construct(){
         $this->relPath = URI::RELATIVE_PATH();
-        $this->ini_data = parse_ini_file($this->relPath . "libs/PDO_data.ini");
+        $this->ini_data = parse_ini_file($this->relPath . "/libs/PDO_data.ini");
     }
 
     public function is_connected(){
@@ -393,7 +393,7 @@ class database{
             }
             catch(Exception $e){
                 if($auto_err_proc){
-                    header("Location: {$this->relPath}err/?errcode=ERR_DB_CONNECTING_REFUSED&to={$_SERVER['PHP_SELF']}");
+                    header("Location: {$this->relPath}/err/?errcode=ERR_DB_CONNECTING_REFUSED&to={$_SERVER['PHP_SELF']}");
                     exit();
                 }
                 else{

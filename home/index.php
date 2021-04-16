@@ -16,7 +16,7 @@ if(!$page->get_account_info()["login"]){
 
 <!DOCTYPE html>
 <html lang="ja">
-<?php $page->gen_page("head", $page->add_css(["style/main.css", "style/home.css"]) . $page->add_js(["js/main.js", "js/home.js"]) . $page->sw_reg()); ?>
+<?php $page->gen_page("head", $page->add_css(["/style/main.css", "/style/home.css"]) . $page->add_js(["/js/main.js", "/js/home.js"]) . $page->sw_reg()); ?>
 <body id="_home">
 <div id="main_container">
     <!--header-->

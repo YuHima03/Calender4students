@@ -88,8 +88,8 @@ $form_token = rand_text();
 $_SESSION['form_token'] = $form_token;
 
 //headタグの内容
-$HEAD_CSS = $page->add_css(["style/main.css", "style/login.css"]);
-$HEAD_JS = $page->add_js(["js/main.js", "js/login.js"]);
+$HEAD_CSS = $page->add_css(["/style/main.css", "/style/login.css"]);
+$HEAD_JS = $page->add_js(["/js/main.js", "/js/login.js"]);
 $PHP_DATA = $page->put_data($PHP_DATA, true);
 
 ?>

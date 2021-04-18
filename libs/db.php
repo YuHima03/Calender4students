@@ -30,7 +30,7 @@ class DB{
      * 接続する
      * @param bool $auto_error_redirect エラー発生時の自動リダイレクトの有無
      */
-    public function connect($auto_error_redirect = true){
+    public function connect(){
         if(is_string($this->dsn) && is_array($this->loginInfo) && !$this->is_connected()){
             try{
                 $this->PDO_obj = new PDO($this->dsn, $this->loginInfo["username"], $this->loginInfo["password"]);
@@ -70,10 +70,17 @@ class DB{
     }
 
     /**
-     * @param string $stmt statement
+     * same as `PDO->prepare`
+     * @param string $sql sql statement
+     * @return \PDOStatement|false
      */
-    public function prepare($stmt){
-        return $this->PDO_obj->prepare($stmt);
+    public function prepare(string $stmt){
+        if($this->is_connected()){
+            return $this->PDO_obj->prepare($stmt);
+        }
+        else{
+            return false;
+        }
     }
 }
 

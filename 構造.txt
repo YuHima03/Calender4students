@@ -28,16 +28,17 @@ root
 
 C4S (root)
     account -- アカウント情報
-        * uuid      varchar(16)     PRIMARY     -- 内部識別用
-        * name      varchar(256)    UNIQUE      -- ログイン時に使用するID
-        * pass      varchar(128)    NOT NULL    -- sha512で暗号化
-        * birthday  date                        -- 誕生日 (NULLの場合は未設定)
-        * email     varchar(256)    UNIQUE      -- メールアドレス (重複不可)
-        * unclaimed boolean                     -- 仮登録のときはtrue
+        * uuid          varchar(36)     PRIMARY     -- 内部識別用
+        * name          varchar(256)    UNIQUE      -- ログイン時に使用するID
+        * pass          varchar(128)    NOT NULL    -- sha512で暗号化
+        * birthday      date                        -- 誕生日 (NULLの場合は未設定)
+        * email         varchar(256)    UNIQUE      -- メールアドレス (重複不可)
+        * unclaimed     boolean                     -- 仮登録のときはtrue
+        * delete_date   date                        -- 削除日
+        * permission    int             NOT NULL    -- 0=通常, 4=デベロッパ, 5=管理者(最高権限)
 
     login_session -- ログインのセッション情報
-        * uuid          varchar(16) NOT NULL    -- 複数ログインの場合もあるので重複可
+        * uuid          varchar(36) NOT NULL    -- 複数ログインの場合もあるので重複可
         * start_date    date        NOT NULL    -- セッション開始日(セッション切れ判定用)
-        * session_token varchar(64) PRIMARY     -- sha256で暗号化
-        * cookie_token  varchar(64) PRIMARY     -- sha256...
+        * token         varchar(64) PRIMARY     -- sha256で暗号化
         * auto_login    boolean     NOT NULL    -- 自動ログイン

@@ -88,6 +88,13 @@ class URI{
         exit;
     }
 }
+/**
+ * ランダムな文字列を返す(`$len`の長さの文字列を`$mode`でハッシュ化する)
+ */
+function getRandStr(int $len = 128, string $mode = "sha256") :string {
+    $rand_b = openssl_random_pseudo_bytes($len);
+    return ($mode == "none") ? bin2hex($rand_b) : hash($mode, $rand_b);
+}
 
 /**
  * UUIDを取得する

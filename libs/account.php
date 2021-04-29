@@ -1,15 +1,14 @@
 <?php
 
-use FFI\Exception;
-
 require_once __DIR__."/main.php";
 require_once __DIR__."/db.php";
 
 /**
+ * アカウント管理
  * 同じページ内で複数存在するとバグるかも？
  */
 class account{
-    //エラーども
+    //アカウント全般のエラー
     /**不明なエラー */
     public const ERROR_UNKNOWN = 0;
     /**間違ったIDかパスワード */
@@ -23,6 +22,15 @@ class account{
     /**多すぎる再試行回数(無限ループの可能性) */
     public const ERROR_TOO_MUCH_RETRY = 5;
 
+    //アカウント作成のエラー
+    /**既に使用されている名前 */
+    public const ERROR_USED_NAME = 10;
+    /**条件を満たさない不正な書式 */
+    public const ERROR_INCORRECT_FORMAT = 11;
+    /**利用できない単語 */
+    public const ERROR_BANNED_WORD = 12;
+
+
     //////////////////////////////////////////////////
     // 動的メソッド
 
@@ -31,11 +39,17 @@ class account{
 
     private ?string $userName = null;
 
+    /**マーカー */
+    private int $marker = 0;
+
     /**権限 */
     private int $permission = 0;
 
     /** @var array<int> */
     private ?int $lastError = null;
+
+    /**ログインの種類 (`false` -> 新規, `true` -> 継続) */
+    private bool $loginMode = false;
 
 
     public function __construct(?string $userName = null, ?string $pass = null, bool $autoLogin = false){
@@ -50,7 +64,8 @@ class account{
         return $this->userName;
     }
 
-    public function getStatus() :bool {
+    /**ログインしてるか否か */
+    public function getLoginStatus() :bool {
         return is_string($this->uuid);
     }
 
@@ -64,11 +79,14 @@ class account{
         return ($this->permission === 4);
     }
 
-    /**
-     * エラー情報(番号)の取得
-     */
-    public function getLastError() :int{
+    /**エラー情報(番号)の取得 */
+    public function getLastError() :?int{
         return $this->lastError;
+    }
+
+    /**デバッグ用の目印を取得 */
+    public function getMarker() :int{
+        return $this->marker;
     }
 
     /**
@@ -83,6 +101,9 @@ class account{
 
             if($DB->connect()){
                 if(is_null($userName)){
+                    //ログイン状態の継続
+                    $this->loginMode = true;
+
                     //cookieとセッションの情報を照合して再ログイン
                     if(isset($_SESSION["_token"])){
                         $sql = "SELECT * FROM `account`, `login_session` WHERE `login_session`.`token`=? AND `account`.`uuid` = `login_session`.`uuid`";
@@ -98,10 +119,11 @@ class account{
 
                                 if($expireCheck || $autoLoginCheck){
                                     if(is_null($result["delete_date"])){
-                                        //ログイン成功
+                                        //再ログイン成功
                                         $token = $result["token"];
                                     }
                                     else{
+                                        //アカウント削除済み
                                         $this->logout(true, account::ERROR_DELETED_ACCOUNT);
                                         return false;
                                     }
@@ -118,6 +140,9 @@ class account{
                                 return false;
                             }
                         }
+                        else{
+                            throw new Exception();
+                        }
                     }
                     else{
                         //ログイン失敗(もとから非ログイン状態)
@@ -125,7 +150,12 @@ class account{
                     }
                 }
                 else if(is_string($userName)){
+                    //新規ログイン
+                    $this->loginMode = false;
+
                     if(strlen($pass) === 128){
+                        $this->logout(true);
+
                         $sql = "SELECT * FROM `account` WHERE `name`=? AND `pass`=?";
                         $stmt = $DB->prepare($sql);
 
@@ -161,6 +191,9 @@ class account{
                                     if(!$autoLogin){
                                         setcookie("_session_flag", "1", 0, "/", "", false, true);
                                     }
+
+                                    //セッションID再生成
+                                    session_regenerate_id(true);
                                 }
                                 else{
                                     //削除されたアカウント
@@ -173,6 +206,9 @@ class account{
                                 $this->logout(true, account::ERROR_LOGIN_INCORRECT);
                                 return false;
                             }
+                        }
+                        else{
+                            throw new Exception();
                         }
                     }
                     else{
@@ -188,27 +224,25 @@ class account{
                 $this->userName = $result["name"];
                 $this->permission = (int)$result["permission"];
 
-                //resultを明示的に破棄
-                unset($result);
+                if($this->loginMode && $result["last_login"] !== date("Y-m-d")){
+                    //DBのセッション情報更新
+                    $sql = "UPDATE `login_session` SET `last_login`=? WHERE `token`=?";
+                    $stmt = $DB->prepare($sql);
 
-                //DBのセッション情報更新
-                $sql = "UPDATE `login_session` SET `last_login`=? WHERE `token`=?";
-                $stmt = $DB->prepare($sql);
-
-                if(!$stmt->execute([date("Y-m-d"), $token])){
-                    $this->logout(true, account::ERROR_UNKNOWN);
-                    return false;
+                    if(!$stmt->execute([date("Y-m-d"), $token])){
+                        throw new Exception();
+                    }
                 }
 
-                //セッションID再生成
-                session_regenerate_id(true);
+                //resultを明示的に破棄
+                unset($result);
 
                 $DB->disconnect();
 
                 return true;
             }
             else{
-                return false;
+                throw new Exception();
             }
         }
         catch(PDOException $e){
@@ -217,7 +251,7 @@ class account{
         }
         catch(Exception $e){
             //不明なエラー
-            $this->lastError = account::ERROR_UNKNOWN;
+            $this->logout(true, account::ERROR_UNKNOWN);
             return false;
         }
     }
@@ -236,6 +270,20 @@ class account{
             try{
                 //セッションのトークンを消す
                 if(isset($_SESSION["_token"])){
+                    //ログインセッションから削除
+                    $DB = new DB();
+                    if($DB->connect()){
+                        $sql = "DELETE FROM `login_session` WHERE `token`=?";
+                        $stmt = $DB->prepare($sql);
+
+                        if(!$stmt->execute([$_SESSION["_token"]])){
+                            throw new Exception();
+                        }
+                    }
+                    else{
+                        throw new Exception();
+                    }
+
                     unset($_SESSION["_token"]);
                 }
 
@@ -243,6 +291,8 @@ class account{
                 if(isset($_COOKIE["_session_flag"])){
                     setcookie("_session_flag", "", time()-180, "/");
                 }
+
+                $this->uuid = null;
             }
             catch(PDOException $e){
                 //重大なエラー
@@ -255,30 +305,104 @@ class account{
             }
         }
 
-        //セッションID再生成
-        session_regenerate_id(true);
+        return true;
+    }
+
+    /**
+     * アカウント新規作成
+     * @param string|null $userName 任意の文字列(半角英数字とアンダーバーで構成される4~256文字のID) (`null`で仮登録)
+     * @param string|null $pass (SHA512での暗号化前)
+     * @param bool $login アカウント作成後に自動ログイン
+     */
+    public function create(?string $userName = null, ?string $pass = null, bool $login = true) :bool{
+        try{
+            if($this->getLoginStatus()){
+                $this->logout(true);
+            }
+
+            $DB = new DB();
+
+            if($DB->connect()){
+                switch(checkNameExist($userName)){
+                    case(false):
+                        if(is_null($userName)){
+                            //仮登録アカウント
+                            $sql = "INSERT INTO `account` (`uuid`, `name`, `pass`, `unclaimed`) VALUES (?, ?, ?, 1)";
+                            $stmt = $DB->prepare($sql);
+
+                            do{
+                                $uuid = getUUID();
+                                $name = getRandStr(32);
+                                $pass = getRandStr(128, "sha512");
+                            }while($stmt->execute([$uuid, $name, $pass]));
+                        }
+                        else{
+                            //$userNameと$passの条件
+                            //  $userName
+                            //      - 半角英数字とアンダーバーの4~32文字
+                            //  $pass
+                            //      - 半角英数字と記号(!#$%&()~_\/+|=)の6~32文字
+                            //      - 数字と半角英字がそれぞれ1文字以上
+                            if(preg_match("/^[a-zA-Z0-9_]{4,32}$/", $userName) && preg_match("/^[a-zA-Z0-9_\!\#\$\%\&\(\)\~_\/\\\+\=\|]{6,32}$/", $pass) && preg_match("/\d+/", $pass) && preg_match("/[A-Za-z]+/", $pass)){
+                                $pass = hash("sha512", $pass);
+
+                                $sql = "INSERT INTO `account` (`uuid`, `name`, `pass`, `birthday`, `email`) VALUES (?, ?, ?, ?)";
+                                $stmt = $DB->prepare($sql);
+                            }
+                            else{
+                                $this->lastError = account::ERROR_INCORRECT_FORMAT;
+                                return false;
+                            }
+                        }
+
+                        break;
+
+                    case(true):
+                        $this->lastError = account::ERROR_USED_NAME;
+                        return false;
+
+                    default:
+                        $this->lastError = account::ERROR_UNKNOWN;
+                        return false;
+                }
+
+                $DB->disconnect();
+            }
+            else{
+                throw new Exception();
+            }
+        }
+        catch(PDOException $e){
+            URI::moveto(URI::FATAL_ERROR_PAGE(FATAL_ERRORS::DB_CONNECTION_FAILED));
+        }
+        catch(Exception $e){
+            $this->lastError = account::ERROR_UNKNOWN;
+            return false;
+        }
 
         return true;
     }
 
     /**
-     * @param bool $login アカウント作成後に自動ログイン
+     * アカウント削除 (ログアウト)
+     * @param bool $completely 完全に削除(復元不可)にする (仮登録アカウント等に利用)
      */
-    public function create(bool $login = true) :bool{
-        return true;
-    }
-
-    /**アカウント削除 (ログアウト) */
-    public function deleteAccount() :bool{
+    public function deleteAccount(bool $completely = false) :bool{
         try{
             $DB = new DB();
 
             if($DB->connect()){
-                $sql = "UPDATE `account` SET `delete_date`=? WHERE `uuid`=?";
-                $stmt = $DB->prepare($sql);
+                if($completely){
+                    $sql = "DELETE FROM `account` WHERE `uuid`=?";
+                }
+                else{
+                    //完全削除でなく削除フラグを立てるだけ
+                    $sql = "UPDATE `account` SET `delete_date`=? WHERE `uuid`=?";
+                    $stmt = $DB->prepare($sql);
 
-                if($stmt->execute([date("Y-m-d"), $this->uuid])){
-                    
+                    if(!$stmt->execute([date("Y-m-d"), $this->uuid])){
+                        throw new Exception();
+                    }
                 }
 
                 $DB->disconnect();
@@ -293,6 +417,46 @@ class account{
         }
 
         return $this->logout(true);
+    }
+}
+
+/**
+ * `$userName`が既に存在するか確認
+ * @return bool|null `true` -> 既に存在, `false` -> 存在しない, `null` -> エラー
+ */
+function checkNameExist(string $userName) :?bool{
+    try{
+        $DB = new DB();
+
+        if($DB->connect()){
+            $sql = "SELECT COUNT(`name`) FROM `account` WHERE `name`=?";
+            $stmt = $DB->prepare($sql);
+
+            if($stmt->execute([$userName])){
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if((int)$result["COUNT(`name`)"] === 0){
+                    return false;
+                }
+                else{
+                    return true;
+                }
+            }
+            else{
+                throw new Exception();
+            }
+
+            $DB->disconnect();
+        }
+        else{
+            return null;
+        }
+    }
+    catch(PDOException $e){
+        URI::moveto(URI::FATAL_ERROR_PAGE(FATAL_ERRORS::DB_CONNECTION_FAILED));
+    }
+    catch(Exception $e){
+        return null;
     }
 }
 

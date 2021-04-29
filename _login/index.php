@@ -8,13 +8,13 @@ $loginResult = false;
 
 $account = new account();
 
-if(isset($_POST["username"]) && isset($_POST["pass"])){
-    $account->login($_POST["username"], hash("sha512", $_POST["pass"]), false);
+if(isset($_POST["username"], $_POST["pass"])){
+    $account->login($_POST["username"], hash("sha512", $_POST["pass"]), (isset($_POST["auto_login"]) && $_POST["auto_login"] === "on"));
 }
 
-$page = new page($account);
+$page = new Page($account);
 
-if($account->getStatus()){
+if($account->getLoginStatus()){
     echo $account->getUserName()."としてログイン済みです".page::BR_TAG;
 }
 else{
@@ -27,6 +27,8 @@ if($account->is_admin()){
 else if($account->is_developer()){
     echo "あなたはデベロッパです".page::BR_TAG;
 }
+
+var_dump(getRandStr(32));
 
 ?>
 

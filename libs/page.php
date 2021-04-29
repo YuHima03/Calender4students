@@ -3,7 +3,10 @@
 include_once __DIR__."/main.php";
 include_once __DIR__."/account.php";
 
-class page{
+/**
+ * ページ生成関連
+ */
+class Page{
     public const BR_TAG = "<br />";
 
     /**これも参照になるはず */

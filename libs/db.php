@@ -22,18 +22,18 @@ class DB{
      */
     public function __construct($dbName = "C4S"){
         $this->loginInfo = getDBData();
-
         $this->dsn = "mysql:dbname={$dbName};host=localhost";
     }
 
     /**
      * 接続する
-     * @param bool $auto_error_redirect エラー発生時の自動リダイレクトの有無
      */
     public function connect(){
         if(is_string($this->dsn) && is_array($this->loginInfo) && !$this->is_connected()){
             try{
                 $this->PDO_obj = new PDO($this->dsn, $this->loginInfo["username"], $this->loginInfo["password"]);
+                //エラー時にExceptionを投げるように設定
+                $this->PDO_obj->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             }
             catch(PDOException $e){
                 //接続失敗
@@ -45,7 +45,7 @@ class DB{
         }
         else{
             //設定が不十分 or 接続中
-            return false;
+            return $this->is_connected();
         }
     }
 

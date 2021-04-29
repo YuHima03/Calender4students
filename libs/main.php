@@ -90,10 +90,25 @@ class URI{
 }
 /**
  * ランダムな文字列を返す(`$len`の長さの文字列を`$mode`でハッシュ化する)
+ * @param int $len 長さ
+ * @param string $mode ハッシュ化の種類(`null`でハッシュ化なし)
+ * @param bool $hex ランダムな16進数を利用する
  */
-function getRandStr(int $len = 128, string $mode = "sha256") :string {
-    $rand_b = openssl_random_pseudo_bytes($len);
-    return ($mode == "none") ? bin2hex($rand_b) : hash($mode, $rand_b);
+function getRandStr(int $len = 128, string $mode = null, bool $hex = false) :string {
+    $result = "";
+
+    if($hex){
+        $result = bin2hex(openssl_random_pseudo_bytes($len/2));
+    }
+    else{
+        $str = "abcdefghijklmnopqrstuvwxyz0123456789";
+
+        for($i = 0; $i < $len; $i++){
+            $result .= $str[rand(0, strlen($str)-1)];
+        }
+    }
+
+    return (is_null($mode)) ? $result : hash($mode, $result);
 }
 
 /**

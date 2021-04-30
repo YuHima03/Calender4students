@@ -45,11 +45,23 @@ class account{
     /**権限 */
     private int $permission = 0;
 
+    /**暗号化キー(32文字) */
+    private ?string $encryptKey = null;
+
     /** @var array<int> */
     private ?int $lastError = null;
 
     /**ログインの種類 (`false` -> 新規, `true` -> 継続) */
     private bool $loginMode = false;
+
+    /**アカウント情報を初期状態に(ログアウト時に実行すること多め) */
+    private function setInitAccountInfo(){
+        $this->uuid = null;
+        $this->userName = null;
+        $this->permission = 0;
+        $this->loginMode = false;
+        $this->encryptKey = null;
+    }
 
 
     public function __construct(?string $userName = null, ?string $pass = null, bool $autoLogin = false){
@@ -58,6 +70,10 @@ class account{
 
     public function getUUID() :?string{
         return $this->uuid;
+    }
+
+    public function getEncryptKey() :?string{
+        return $this->encryptKey;
     }
 
     public function getUserName() :?string{
@@ -70,12 +86,12 @@ class account{
     }
 
     /**管理者かどうか */
-    public function is_admin() :bool {
+    public function isAdmin() :bool {
         return ($this->permission === 5);
     }
 
     /**デベロッパかどうか */
-    public function is_developer() :bool {
+    public function isDeveloper() :bool {
         return ($this->permission === 4);
     }
 
@@ -223,6 +239,7 @@ class account{
                 $this->uuid = $result["uuid"];
                 $this->userName = $result["name"];
                 $this->permission = (int)$result["permission"];
+                $this->encryptKey = $result["encrypt_key"];
 
                 if($this->loginMode && $result["last_login"] !== date("Y-m-d")){
                     //DBのセッション情報更新
@@ -292,7 +309,7 @@ class account{
                     setcookie("_session_flag", "", time()-180, "/");
                 }
 
-                $this->uuid = null;
+                $this->setInitAccountInfo();
             }
             catch(PDOException $e){
                 //重大なエラー
@@ -312,9 +329,10 @@ class account{
      * アカウント新規作成
      * @param string|null $userName 任意の文字列(半角英数字とアンダーバーで構成される4~256文字のID) (`null`で仮登録)
      * @param string|null $pass (SHA512での暗号化前)
+     * @param array $option `birthday`: 誕生日(YYYY-MM-DD), `email`: メールアドレス
      * @param bool $login アカウント作成後に自動ログイン
      */
-    public function create(?string $userName = null, ?string $pass = null, bool $login = true) :bool{
+    public function create(?string $userName = null, ?string $pass = null, array $option = [], bool $login = true) :bool{
         try{
             if($this->getLoginStatus()){
                 $this->logout(true);
@@ -327,27 +345,54 @@ class account{
                     case(false):
                         if(is_null($userName)){
                             //仮登録アカウント
-                            $sql = "INSERT INTO `account` (`uuid`, `name`, `pass`, `unclaimed`) VALUES (?, ?, ?, 1)";
+                            $sql = "INSERT INTO `account` (`uuid`, `name`, `pass`, `encrypt_key`, `unclaimed`) VALUES (?, ?, ?, ?, 1)";
                             $stmt = $DB->prepare($sql);
 
+                            $retryConter = 0;
                             do{
-                                $uuid = getUUID();
-                                $name = getRandStr(32);
-                                $pass = getRandStr(128, "sha512");
-                            }while($stmt->execute([$uuid, $name, $pass]));
+                                if($retryConter < 10){
+                                    $uuid = getUUID();
+                                    $name = getRandStr(32);
+                                    $pass = getRandStr(128, "sha512");
+                                    $encryptKey = getRandStr(32, null, true);
+
+                                    $retryConter++;
+                                }
+                                else{
+                                    $this->lastError = account::ERROR_TOO_MUCH_RETRY;
+                                    return false;
+                                }
+                            }while($stmt->execute([$uuid, $name, $pass, $encryptKey]));
                         }
                         else{
+                            $birthday = (isset($option["birthday"])) ? $option["birthday"] : null;
+                            $email = (isset($option["email"])) ? $option["email"] : null;
+
                             //$userNameと$passの条件
                             //  $userName
                             //      - 半角英数字とアンダーバーの4~32文字
                             //  $pass
                             //      - 半角英数字と記号(!#$%&()~_\/+|=)の6~32文字
                             //      - 数字と半角英字がそれぞれ1文字以上
-                            if(preg_match("/^[a-zA-Z0-9_]{4,32}$/", $userName) && preg_match("/^[a-zA-Z0-9_\!\#\$\%\&\(\)\~_\/\\\+\=\|]{6,32}$/", $pass) && preg_match("/\d+/", $pass) && preg_match("/[A-Za-z]+/", $pass)){
+                            if(preg_match("/^[a-zA-Z0-9_]{4,32}$/", $userName) && preg_match("/^[a-zA-Z0-9_\!\#\$\%\&\(\)\~_\/\\\+\=\|]{6,32}$/", $pass) && preg_match("/\d+/", $pass) && preg_match("/[A-Za-z]+/", $pass) && preg_match("/^\d{4}-\d{2}-\d{2}$/", $birthday) && preg_match("/^\S+@\S+\.[^\.\s]+$/", $email)){
                                 $pass = hash("sha512", $pass);
 
-                                $sql = "INSERT INTO `account` (`uuid`, `name`, `pass`, `birthday`, `email`) VALUES (?, ?, ?, ?)";
+                                $sql = "INSERT INTO `account` (`uuid`, `name`, `pass`, `encrypt_key`, `birthday`, `email`) VALUES (?, ?, ?, ?, ?, ?)";
                                 $stmt = $DB->prepare($sql);
+
+                                $retryConter = 0;
+                                do{
+                                    if($retryConter < 10){
+                                        $uuid = getUUID();
+                                        $encryptKey = getRandStr(32, null, true);
+
+                                        $retryConter++;
+                                    }
+                                    else{
+                                        $this->lastError = account::ERROR_TOO_MUCH_RETRY;
+                                        return false;
+                                    }
+                                }while($stmt->execute([$uuid, $userName, $pass, $encryptKey, $birthday, $email]));
                             }
                             else{
                                 $this->lastError = account::ERROR_INCORRECT_FORMAT;
@@ -367,6 +412,11 @@ class account{
                 }
 
                 $DB->disconnect();
+
+                //ログイン処理
+                if($login){
+                    return $this->login($userName, $pass);
+                }
             }
             else{
                 throw new Exception();
@@ -389,23 +439,39 @@ class account{
      */
     public function deleteAccount(bool $completely = false) :bool{
         try{
-            $DB = new DB();
+            if($this->getLoginStatus()){
+                $DB = new DB();
 
-            if($DB->connect()){
-                if($completely){
-                    $sql = "DELETE FROM `account` WHERE `uuid`=?";
-                }
-                else{
-                    //完全削除でなく削除フラグを立てるだけ
-                    $sql = "UPDATE `account` SET `delete_date`=? WHERE `uuid`=?";
-                    $stmt = $DB->prepare($sql);
+                if($DB->connect()){
+                    if($completely){
+                        $sql = "DELETE FROM `account` WHERE `uuid`=?";
+                        $stmt = $DB->prepare($sql);
 
-                    if(!$stmt->execute([date("Y-m-d"), $this->uuid])){
-                        throw new Exception();
+                        if(!$stmt->execute([$this->uuid])){
+                            throw new Exception();
+                        }
+
+                        //ファイル削除
+                        if(isset($this->uuid)){
+                            $dirn = dirname(__DIR__)."/data/{$this->uuid}";
+
+                            if(!rmdir_all($dirn)){
+                                throw new Exception();
+                            }
+                        }
                     }
-                }
+                    else{
+                        //完全削除でなく削除フラグを立てるだけ
+                        $sql = "UPDATE `account` SET `delete_date`=? WHERE `uuid`=?";
+                        $stmt = $DB->prepare($sql);
 
-                $DB->disconnect();
+                        if(!$stmt->execute([date("Y-m-d"), $this->uuid])){
+                            throw new Exception();
+                        }
+                    }
+
+                    $DB->disconnect();
+                }
             }
         }
         catch(PDOException $e){

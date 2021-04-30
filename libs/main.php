@@ -125,4 +125,34 @@ function getUUID(){
     return substr($uuidStr, 0, 8) . '-' . substr($uuidStr, 8, 4) . '-' . substr($uuidStr, 12, 4) . '-' . substr($uuidStr, 16, 4) . '-' . substr($uuidStr, 20);
 }
 
+/**
+ * フォルダを削除
+ */
+function rmdir_all(string $path) :bool{
+    if(is_dir($path)){
+        if($dirhandle = opendir($path)){
+            while(false !== ($entry = readdir($dirhandle))){
+                if($entry !== "." && $entry !== ".."){
+                    $entryDirName = "{$path}/{$entry}";
+
+                    if(is_dir($entryDirName)){
+                        //再帰的に
+                        rmdir_all($entryDirName);
+                    }
+                    else{
+                        unlink($entryDirName);
+                    }
+                }
+            }
+
+            closedir($dirhandle);
+            rmdir($path);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
 ?>

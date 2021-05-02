@@ -13,12 +13,16 @@ class FATAL_ERRORS{
  * いろんなページへの相対パスの取得
  */
 class URI{
+    public static function get_Level() :int{
+        preg_match_all("/\//", $_SERVER["SCRIPT_NAME"], $result, PREG_SET_ORDER);
+        return sizeof($result) - 1;
+    }
+
     /**
      * ROOTフォルダへの相対パス
      */
     public static function RELATIVE_PATH() : string{
-        preg_match_all("/\//", $_SERVER["SCRIPT_NAME"], $result, PREG_SET_ORDER);
-        return substr("./".str_repeat("../", sizeof($result) - 1), 0, -1);
+        return substr("./".str_repeat("../", URI::get_Level()), 0, -1);
     }
 
     /**

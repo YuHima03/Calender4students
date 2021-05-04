@@ -7,6 +7,10 @@ class FATAL_ERRORS{
     public const UNKNOWN = 0;
     public const FILE_LOADING_FAILED = 1;
     public const DB_CONNECTION_FAILED = 2;
+
+    public static function exit_with_error(){
+        
+    }
 }
 
 /**
@@ -14,15 +18,24 @@ class FATAL_ERRORS{
  */
 class URI{
     public static function get_Level() :int{
-        preg_match_all("/\//", $_SERVER["SCRIPT_NAME"], $result, PREG_SET_ORDER);
+        $path = substr($_SERVER["SCRIPT_FILENAME"], strlen(preg_replace("/\\\\/", "/", URI::ABSOLUTE_PATH())));
+        preg_match_all("/\//", $path, $result, PREG_SET_ORDER);
+
         return sizeof($result) - 1;
     }
 
     /**
-     * ROOTフォルダへの相対パス
+     * 最上位フォルダへの相対パス
      */
     public static function RELATIVE_PATH() : string{
         return substr("./".str_repeat("../", URI::get_Level()), 0, -1);
+    }
+
+    /**
+     * 最上位フォルダへの絶対パス
+     */
+    public static function ABSOLUTE_PATH() :string{
+        return dirname(__DIR__);
     }
 
     /**
@@ -69,17 +82,11 @@ class URI{
     }
 
     /**
-     * 自身(=呼び出したファイル) へのrootファイルからの相対アドレス
-     */
-    public static function SELF_PAGE() :string{
-        return $_SERVER["PHP_SELF"];
-    }
-
-    /**
      * 重大なエラー発生時(続行不能の場合の移動先)
      */
     public static function FATAL_ERROR_PAGE(int $errorType = FATAL_ERRORS::UNKNOWN) :string{
-        $result = URI::add_GET_Param(URI::RELATIVE_PATH()."/error/", ["errcode"=>$errorType, "to"=>URI::SELF_PAGE()]);
+        $to = substr($_SERVER["SCRIPT_FILENAME"], strlen(preg_replace("/\\\\/", "/", URI::ABSOLUTE_PATH())));
+        $result = URI::add_GET_Param(URI::RELATIVE_PATH()."/error/", ["errcode"=>$errorType, "to"=>$to]);
 
         return $result;
     }
@@ -92,6 +99,7 @@ class URI{
         exit;
     }
 }
+
 /**
  * ランダムな文字列を返す(`$len`の長さの文字列を`$mode`でハッシュ化する)
  * @param int $len 長さ

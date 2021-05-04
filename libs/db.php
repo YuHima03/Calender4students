@@ -7,7 +7,7 @@ require_once __DIR__."/main.php";
  * @return array<string>
  */
 function getDBData(){
-    return parse_ini_file(URI::RELATIVE_PATH() . "/libs/PDO_data.ini");
+    return parse_ini_file(dirname(__DIR__). "/libs/PDO_data.ini");
 }
 
 class DB{

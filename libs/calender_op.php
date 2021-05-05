@@ -3,14 +3,65 @@
 include_once __DIR__."/main.php";
 
 /**
- * カレンダーの操作
+ * カレンダーの操作いろいろ
  */
 class calenderOp{
-    public static array $defaultArrayData = [];
+    /**予定等 */
+    public const SCHEDULE = 0;
+    /**予定のIDリスト */
+    public const ID_LIST = 1;
+    /**タグのリスト */
+    public const TAG_LIST = 2;
+
+    private static array $fileTypeList = [
+        "", "id_list"
+    ];
 
     private \account $account = null;
 
     private ?string $dirpath = null;
+
+    /**
+     * @return string|false
+     */
+    private static function getFullFileName(int $fileType, string $fileName){
+        //ファイル名書式チェック
+        switch($fileType){
+            case(self::SCHEDULE):
+                if(!preg_match("/^\d{4}_(0[1-9]|1[0-2])$/", $fileName)){
+                    throw new Error("Invalid `fileName` form");
+                    return false;
+                }
+                break;
+
+            case(self::ID_LIST):
+            case(self::TAG_LIST):
+                if(strlen($fileName) !== 0){
+                    throw new Error("Invalid `fileName` value, which must be empty string");
+                    return false;
+                }
+                break;
+
+            default:
+                throw new Error("Unknown `fileType` value");
+                return false;
+        }
+
+        //ファイル名の確定
+        if(is_string(self::$fileTypeList[$fileType])){
+            $fileTypeStr = self::$fileTypeList[$fileType];
+
+            if(strlen($fileTypeStr) > 0){
+                $fileName .= "_".$fileTypeStr;
+            }
+        }
+        else{
+            throw new Error("Invalid `fileType` value");
+            return false;
+        }
+
+        return $fileName;
+    }
 
     public function __construct(?\account &$accountObj){
         if(is_null($accountObj)){
@@ -25,7 +76,7 @@ class calenderOp{
     /**
      * @return array|false
      */
-    public function getJSON(){
+    public function getJSON(int $fileType, string $fileName){
         if($this->account->getLoginStatus() && is_string($this->dirpath) && is_dir($this->dirpath)){
             //ファイルのパス生成
             $binFilePath = "{$this->dirpath}/schedule.dat";
@@ -33,7 +84,9 @@ class calenderOp{
 
             if(!is_file($binFilePath) || !is_file($ivFilePath)){
                 //初のファイル作成
-                $this->updateJSON();
+                if(!$this->updateJSON($fileType, $fileName)){
+                    return false;
+                }
             }
 
             //ファイルを開く
@@ -67,13 +120,17 @@ class calenderOp{
         }
     }
 
-    public function updateJSON(array $data = calenderOp::$defaultArrayData) :bool{
+    public function updateJSON(int $fileType, string $fileName = "", array $data = []) :bool{
         $returnResult = false;
         $timestamp = time();
 
+        if(($fileName = self::getFullFileName($fileType, $fileName)) === false){
+            return false;
+        }
+
         //ファイル破損を防ぐために別に作ってから後でコピーする方式を利用
-        $binFilePath = "{$this->dirpath}/schedule_{$timestamp}.dat";
-        $ivFilePath = dirname($binFilePath)."/iv_{$timestamp}.dat";
+        $binFilePath = "{$this->dirpath}/{$fileName}_{$timestamp}.dat";
+        $ivFilePath = dirname($binFilePath)."/{$fileName}_iv_{$timestamp}.dat";
         $ivFile = fopen($ivFilePath, "r+b");
         $binFile = fopen($binFilePath, "r+b");
 
@@ -103,7 +160,7 @@ class calenderOp{
         fclose($binFile);
         fclose($ivFile);
 
-        //ファイルのコピペ
+        //ファイルのコピペで終了
         return $returnResult && copy($binFilePath, dirname($binFilePath)."/schedule.dat") && copy($ivFilePath, dirname($ivFilePath)."/iv.dat");
     }
 }

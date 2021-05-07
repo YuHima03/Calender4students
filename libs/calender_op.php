@@ -78,9 +78,13 @@ class calenderOp{
      */
     public function getJSON(int $fileType, string $fileName){
         if($this->account->getLoginStatus() && is_string($this->dirpath) && is_dir($this->dirpath)){
+            if(($fullFileName = self::getFullFileName($fileType, $fileName)) === false){
+                return false;
+            }
+
             //ファイルのパス生成
-            $binFilePath = "{$this->dirpath}/schedule.dat";
-            $ivFilePath = dirname($binFilePath)."/iv.dat";
+            $binFilePath = "{$this->dirpath}/{$fullFileName}.dat";
+            $ivFilePath = dirname($binFilePath)."/{$fullFileName}_iv.dat";
 
             if(!is_file($binFilePath) || !is_file($ivFilePath)){
                 //初のファイル作成
@@ -161,7 +165,7 @@ class calenderOp{
         fclose($ivFile);
 
         //ファイルのコピペで終了
-        return $returnResult && copy($binFilePath, dirname($binFilePath)."/schedule.dat") && copy($ivFilePath, dirname($ivFilePath)."/iv.dat");
+        return $returnResult && copy($binFilePath, dirname($binFilePath)."/{$fileName}.dat") && copy($ivFilePath, dirname($ivFilePath)."/{$fileName}_iv.dat");
     }
 }
 

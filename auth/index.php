@@ -3,10 +3,13 @@
  * 認証用
  */
 
-include "../libs/C4S_main.php";
+include_once "../libs/main.php";
+include_once "../libs/account.php";
 
-if(isset($_POST["timestamp"])){
-    
-}
+$result = [
+    "result"    =>  false
+];
+
+$account = new account();
 
 ?>

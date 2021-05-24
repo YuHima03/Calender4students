@@ -8,11 +8,25 @@ $loginResult = false;
 
 $account = new account();
 
+//ログイン処理
 if(isset($_POST["username"], $_POST["pass"])){
-    $account->login($_POST["username"], hash("sha512", $_POST["pass"]), (isset($_POST["auto_login"]) && $_POST["auto_login"] === "on"));
+    //トークン認証
+    if(isset($_SESSION["_ftoken"], $_POST["ftoken"])){
+        $account->login($_POST["username"], hash("sha512", $_POST["pass"]), (isset($_POST["auto_login"]) && $_POST["auto_login"] === "on"));
+        //トークンはもう使わない
+        unset($_SESSION["_ftoken"]);
+    }
+    else{
+        //認証失敗(トークン新規生成)
+        $account->logout(true, account::ERROR_BAD_LOGIN_REQUEST);
+        $ftoken = getRandStr(32);
+        $_SESSION["_ftoken"] = $ftoken;
+    }
 }
 
 $page = new Page($account);
+
+//以下デバッグ用
 
 if($account->getLoginStatus()){
     echo $account->getUserName()."としてログイン済みです".page::BR_TAG;
@@ -28,10 +42,18 @@ else if($account->isDeveloper()){
     echo "あなたはデベロッパです".page::BR_TAG;
 }
 
+$page->setPageInfo([
+    "title" =>  "ログイン"
+]);
+echo "<pre style='background: whitesmoke;'>", var_dump($page->getPageInfo()), "</pre>";
+
 ?>
 
 <!DOCTYPE html>
-<html lang="ja" id="_login">
+<html lang="ja" id="_login" <?=page::OGP_PREFIX?>>
+<head>
+    <?=$page->genPage(page::HEAD_C)?>
+</head>
 <body>
     <main>
         <div id="container">
@@ -54,7 +76,7 @@ else if($account->isDeveloper()){
                     </label>
                     <input type="submit" value="ログイン" />
                     <!--トークン-->
-                    <input type="hidden" name="form_token" value="" />
+                    <input type="hidden" name="ftoken" value="<?=$ftoken?>" />
                 </form>
             </div>
         </div>

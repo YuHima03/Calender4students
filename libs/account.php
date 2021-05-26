@@ -267,7 +267,7 @@ class account{
         }
         catch(PDOException $e){
             //重大なエラー
-            URI::moveto(URI::FATAL_ERROR_PAGE(FATAL_ERRORS::DB_CONNECTION_FAILED));
+            exitWithErrorPage(FATAL_ERRORS::DB_OPERATION_FAILED);
         }
         catch(Exception $e){
             //不明なエラー
@@ -316,7 +316,7 @@ class account{
             }
             catch(PDOException $e){
                 //重大なエラー
-                URI::moveto(URI::FATAL_ERROR_PAGE(FATAL_ERRORS::DB_CONNECTION_FAILED));
+                exitWithErrorPage(FATAL_ERRORS::DB_OPERATION_FAILED);
             }
             catch(Exception $e){
                 //不明なエラー
@@ -426,7 +426,7 @@ class account{
             }
         }
         catch(PDOException $e){
-            URI::moveto(URI::FATAL_ERROR_PAGE(FATAL_ERRORS::DB_CONNECTION_FAILED));
+            exitWithErrorPage(FATAL_ERRORS::DB_OPERATION_FAILED);
         }
         catch(Exception $e){
             $this->lastError = account::ERROR_UNKNOWN;
@@ -438,7 +438,7 @@ class account{
 
     /**
      * アカウント削除 (ログアウト)
-     * @param bool $completely 完全に削除(復元不可)にする (仮登録アカウント等に利用)
+     * @param bool $completely 完全に削除(復元不可)にする (仮登録アカウント等に利用：まじで復元不可になるので取扱注意)
      */
     public function deleteAccount(bool $completely = false) :bool{
         try{
@@ -478,7 +478,7 @@ class account{
             }
         }
         catch(PDOException $e){
-            URI::moveto(URI::FATAL_ERROR_PAGE(FATAL_ERRORS::DB_CONNECTION_FAILED));
+            exitWithErrorPage(FATAL_ERRORS::DB_OPERATION_FAILED);
         }
         catch(Exception $e){
             $this->lastError = account::ERROR_UNKNOWN;
@@ -522,7 +522,7 @@ function checkNameExist(string $userName) :?bool{
         }
     }
     catch(PDOException $e){
-        URI::moveto(URI::FATAL_ERROR_PAGE(FATAL_ERRORS::DB_CONNECTION_FAILED));
+        exitWithErrorPage(FATAL_ERRORS::DB_OPERATION_FAILED);
     }
     catch(Exception $e){
         return null;

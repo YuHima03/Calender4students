@@ -10,11 +10,16 @@ $result = [
     "result"    =>  false
 ];
 
-if(isset($_POST["timestamp"])){
-    $account = new account();
+if(isset($_POST["timestamp"], $_POST["token"])){
+    if($_POST["token"] === $_SESSION["auth_token"]){
+        $account = new account();
 
-    if($account->getLoginStatus() === true){
-        $result["result"] = true;
+        if($account->getLoginStatus() === true){
+            $result["result"] = true;
+        }
+    }
+    else{
+        unset($_SESSION["auth_token"]);
     }
 }
 

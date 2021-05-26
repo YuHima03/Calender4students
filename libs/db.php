@@ -38,7 +38,7 @@ class DB{
             catch(PDOException $e){
                 //接続失敗
                 //続行不能のエラー
-                URI::moveto(URI::FATAL_ERROR_PAGE(FATAL_ERRORS::DB_CONNECTION_FAILED));
+                exitWithErrorPage(FATAL_ERRORS::DB_CONNECTION_REFUSED);
             }
 
             return true;

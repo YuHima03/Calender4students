@@ -5,12 +5,34 @@
  */
 class FATAL_ERRORS{
     public const UNKNOWN = 0;
-    public const FILE_LOADING_FAILED = 1;
-    public const DB_CONNECTION_FAILED = 2;
+    /**ファイル読み込み失敗 */
+    public const FILE_LOADING_FAILED = 10;
+    /**ファイル操作失敗 */
+    public const FILE_OPERATION_FAILED = 11;
+    /**DB接続失敗 */
+    public const DB_CONNECTION_REFUSED = 20;
+    /**DB操作失敗 */
+    public const DB_OPERATION_FAILED = 21;
 
-    public static function exit_with_error(){
-        
+    public static $errCodeList = [
+        0   =>  "UNKNOWN",
+        10  =>  "FILE_LOADING_FAILED",
+        11  =>  "FILE_OPERATION_FAILED",
+        20  =>  "DB_CONNECTION_REFUSED",
+        21  =>  "DB_OPERATION_FAILED"
+    ];
+}
+
+/**
+ * エラー画面を表示して終了
+ * @param int $errorNum `FATAL_ERRORS`の定数、もしくは`HTTPステータス`(404...等)
+ */
+function exitWithErrorPage(int $errorNum, bool $errorLog = true){
+    if($errorLog){
+        //ログ保存
     }
+
+    exit(include URI::ABSOLUTE_PATH()."/error/fatalerrors.php");
 }
 
 /**

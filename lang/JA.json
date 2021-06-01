@@ -1,4 +1,26 @@
 {
+    "gui"   :   {
+        "ok"    :   "OK",
+        "cancel":   "キャンセル",
+        "yes"   :   "はい",
+        "no"    :   "いいえ",
+        "done"  :   "完了",
+        "open"  :   "開く",
+        "close" :   "閉じる",
+        "save"  :   "保存",
+        "finish":   "終了"
+    },
+    "errors"    :   {
+        "error" :   "エラー"
+    },
+    "cautions"  :   {
+        "caution"   :   "注意",
+        "finish_without_saving" :   "保存せずに終了してもよろしいですか？",
+        "delete_confirmnation"  :   "削除してもよろしいですか？\n削除すると、元に戻すことはできません。"
+    },
+    "warnings"  :   {
+        "warning"   :   "警告"
+    },
     "login" :   {
         "pageinfo"  :   {
             "title" :   "ログイン"
@@ -9,7 +31,7 @@
             "account_name"  :   "アカウント名",
             "password"      :   "パスワード",
             "auto_login"    :   "自動ログイン",
-            "dont_have_account" :   "アカウントをお持ちでないですか？",
+            "dont_you_have_account" :   "アカウントをお持ちでないですか？",
             "signup_here"   :   "新規登録"
         },
         "error"    :   {
@@ -17,8 +39,9 @@
             "unknown_error_occured"     :   "不明なエラーが発生しました。時間を空けてもう一度お試し下さい。"
         }
     },
-
     "signup"    :   {
-
+        "pageinfo"  :   {
+            "title" :   "新規登録"
+        }
     }
 }

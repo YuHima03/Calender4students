@@ -3,9 +3,12 @@
  * 
  * Main javascript of the website
  * 
- * @author  YuHima <Twitter:@YuHima_03>
+ * @author  YuHima
  * @version 1.0.0 (2021-01-30)
  */
+
+//読み込み完了フラグ
+C4EL_MAIN_JS = false;
 
 /// いろいろな関数 ///
 /**PHPでいうところのisset */

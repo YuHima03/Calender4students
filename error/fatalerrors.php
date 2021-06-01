@@ -4,7 +4,7 @@
  * (他PHPファイルより読み込みあり)
  */
 
-include_once "../libs/main.php";
+include_once dirname(__DIR__)."/libs/main.php";
 
 $errorNum = (is_numeric($errorNum) && is_string(FATAL_ERRORS::$errCodeList[$errorNum])) ? $errorNum : FATAL_ERRORS::UNKNOWN;
 

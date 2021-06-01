@@ -82,6 +82,12 @@ class DB{
             return false;
         }
     }
+
+    public function query(string $query, int $fetchMode = PDO::FETCH_ASSOC){
+        $result = $this->PDO_obj->query($query);
+
+        return $result->fetchAll($fetchMode);
+    }
 }
 
 ?>

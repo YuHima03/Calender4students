@@ -87,17 +87,43 @@ class HTMLElement{
  * 言語と言語ファイルの取得等
  */
 class lang{
-    public const Japanese = "JA";
-    public const Japanese_Hiragana = "JA_H";
-    public const English = "EN";
-
-    private ?\account $account = null;
+    public const Japanese = "ja";
+    public const Japanese_Hiragana = "ja_h";
+    public const English = "en";
 
     private static $langList = [
         self::Japanese,
         self::Japanese_Hiragana,
         self::English
     ];
+
+    private ?\account $account = null;
+
+    private ?string $lang = null;
+
+    private ?array $langFile = null;
+
+    //言語ファイルの読み込み
+    private function loadLangFile() :bool{
+        $filename = URI::ABSOLUTE_PATH()."/lang/".$this->getLang().".json";
+        $result = file_get_contents($filename);
+
+        if($result !== false){
+            $json = json_decode($result, true);
+
+            if(is_array($json)){
+                $this->langFile = $json;
+                return true;
+            }
+            else{
+                //throw new ErrorException("json-decode failed");
+                return false;
+            }
+        }
+        else{
+            return false;
+        }
+    }
 
     public function __construct(?\account &$accountObj = null, ?string $lang = null, bool $sync = true){
         //accountオブジェクト
@@ -112,6 +138,21 @@ class lang{
         if(isset($lang)){
             //言語の設定
             $this->setLang($lang, $sync);
+        }
+        else{
+            $this->getLang();
+        }
+    }
+
+    public function setLang_GET(bool $sync = true) :bool{
+        if(isset($_GET["lang"])){
+            $langStr = mb_strtolower($_GET["lang"]);
+            $langSync = !(isset($_GET["langsync"]) && (strtolower($_GET["langsync"]) === "false" || $_GET["langsync"] === "0"));
+            
+            return $this->setLang($langStr, $langSync && $sync);
+        }
+        else{
+            return false;
         }
     }
 
@@ -140,11 +181,46 @@ class lang{
                 $_SESSION["_lang"] = $lang;
             }
 
+            $this->lang = $lang;
+
             return true;
         }
         else{
-            throw new ErrorException("Unknown `lang` value -> '{$lang}'");
+            //throw new ErrorException("Unknown `lang` value -> '{$lang}'");
             return false;
+        }
+    }
+
+    public function getWord(string $key) :?string{
+        if(isset($this->langFile)){
+            $result = $this->langFile;
+
+            while(preg_match("/^\w+/", $key, $matchstr)){
+                if(is_array($result)){
+                    if(($result = @isset_check($result[$matchstr[0]])) !== null){
+                        $key = substr($key, strlen($matchstr[0]) + 1);
+                    }
+                    else{
+                        //throw new ErrorException("Unknown key -> '{$matchstr[0]}'")
+                        return null;
+                    }
+                }
+                else{
+                    //throw new ErrorException("The variable isn't array");
+                    return null;
+                }
+            }
+            unset($matchstr);
+
+            return is_string($result) ? $result : null;
+        }
+        else{
+            if($this->loadLangFile()){
+                return $this->getWord($key);
+            }
+            else{
+                return null;
+            }
         }
     }
 
@@ -154,46 +230,76 @@ class lang{
     public function getLang(){
         $result = null;
 
-        //まずDB
-        $DB = new DB();
-        if($DB->connect()){
-            $sql = "SELECT `lang` FROM `account` WHERE `uuid`=?";
-            $stmt = $DB->prepare($sql);
+        if(isset($this->lang)){
+            //まずDB
+            $DB = new DB();
+            if($DB->connect()){
+                $sql = "SELECT `lang` FROM `account` WHERE `uuid`=?";
+                $stmt = $DB->prepare($sql);
 
-            if($stmt->execute([$this->account->getUUID()])){
-                $result = $stmt->fetch(PDO::FETCH_ASSOC)["lang"];
-            }
-            else{
-                //エラーが発生？
-                return false;
+                if($stmt->execute([$this->account->getUUID()])){
+                    $result = $stmt->fetch(PDO::FETCH_ASSOC)["lang"];
+                }
+                else{
+                    //エラーが発生？
+                    return false;
+                }
+
+                $DB->disconnect();
             }
 
-            $DB->disconnect();
+            //次にセッション
+            if(isset($_SESSION["_lang"])){
+                if(in_array($_SESSION["_lang"], self::$langList)){
+                    $result = $_SESSION["_lang"];
+                }
+                else{
+                    //セッション破棄
+                    unset($_SESSION["_lang"]);
+                }
+            }
+
+            //言語が未設定の場合は設定する
+            if(is_null($result)){
+                if($this->setLang()){
+                    $result = self::Japanese;
+                }
+                else{
+                    //エラーが発生？
+                    return false;
+                }
+            }
+
+            //クラスオブジェクトに保存
+            $this->lang = $result;
         }
-
-        //次にセッション
-        if(isset($_SESSION["_lang"])){
-            if(in_array($_SESSION["_lang"], self::$langList)){
-                $result = $_SESSION["_lang"];
-            }
-            else{
-                //セッション破棄
-                unset($_SESSION["_lang"]);
-            }
-        }
-
-        //言語が未設定の場合は設定する
-        if(is_null($result)){
-            if($this->setLang()){
-                $result = self::Japanese;
-            }
-            else{
-                //エラーが発生？
-                return false;
-            }
+        else{
+            $result = $this->lang;
         }
 
         return $result;
+    }
+
+    public function getLangAttr(){
+        $result = null;
+
+        switch($this->getLang()){
+            case(lang::English):
+                $result = "en";
+                break;
+
+            case(lang::Japanese):
+            case(lang::Japanese_Hiragana):
+                $result = "ja";
+                break;
+
+            default:
+                $this->setLang();
+                $result = "ja";
+                break;
+        }
+
+        return "lang=\"{$result}\"";
     }
 }
 
@@ -212,6 +318,8 @@ class page{
     public const HEAD = 0;
     /**headタグ(中身のみ) */
     public const HEAD_C = 1;
+    /**scriptタグ(BODY内) */
+    public const JS_INBODY = 2;
 
     /**
      * ページ情報(デフォルト)
@@ -229,6 +337,15 @@ class page{
             "robots"    =>  [
                 "none", "notranslate"
             ]
+        ],
+        //外部から読み込み(相対パス)
+        //JS
+        "js"    =>  [
+
+        ],
+        //CSS
+        "css"   =>  [
+
         ]
     ];
 
@@ -256,14 +373,7 @@ class page{
 
         //langオブジェクト
         $this->lang = new lang($accountObj);
-        if(isset($_GET["lang"])){
-            try{
-                $this->lang->setLang($_GET["lang"], !(isset($_GET["langsync"]) && in_array($_GET["langsync"], ["false", "FALSE", "0"])));
-            }
-            catch(Exception $e){
-                //何もしない
-            }
-        }
+        $this->lang->setLang_GET();
 
         return;
     }
@@ -286,7 +396,7 @@ class page{
         }
 
         foreach($info as $key => $value){
-            if(is_array($value) && is_array($arrData[$key])){
+            if(@is_array($value) && @is_array($arrData[$key])){
                 //再帰的に呼び出し
                 $this->setPageInfo($value, [...$deep, $key]);
             }
@@ -305,9 +415,12 @@ class page{
         return $this->pageInfo;
     }
 
-    //headタグの取得
+    /**
+     * headタグの生成
+     */
     private function genHead(?bool $inclTag = true) :string{
-        $title = htmlspecialchars($this->pageInfo["title"]).(($this->pageInfo["appNameAfterTitle"]) ? "&nbsp|&nbspC4S" : "");
+        $pageInfo = $this->pageInfo;
+        $title = htmlspecialchars($pageInfo["title"]).(($pageInfo["appNameAfterTitle"]) ? "&nbsp|&nbspC4S" : "");
 
         $result = <<<EOD
         <meta charset="UTF-8">
@@ -316,12 +429,57 @@ class page{
         <title>{$title}</title>
         EOD;
 
-        $elem = [
-            
-        ];
+        /** @var \HTMLElement[] */
+        $innerElements = [];
+
+        //css
+        if(is_array($css = @isset_check($pageInfo["css"]))){
+            foreach($css as $path){
+                $innerElements[] = new HTMLElement("link", [], [
+                    "rel"   =>  "stylesheet",
+                    "type"  =>  "text/css",
+                    "href"  =>  $path
+                ]);
+            }
+        }
+        //js
+        if(is_array($js = @isset_check($pageInfo["js"]))){
+            foreach($js as $path){
+                if(is_string($path)){
+                    $innerElements[] = new HTMLElement("script", [], [
+                        "src"  =>  $path
+                    ]);
+                }
+            }
+        }
+
+        //一括生成
+        foreach($innerElements as $elem){
+            $result .= $elem->getHTML();
+        }
 
         //開始、終了タグの追加
         if($inclTag)    $result = "<head>".$result."</head>";
+
+        return $result;
+    }
+
+    /**
+     * BODYタグ内のscriptタグの生成
+     */
+    private function getScriptInBody() :string{
+        $result = "";
+
+        if(is_array($js = @isset_check($this->pageInfo["js"]))){
+            foreach($js as $value){
+                if(is_array($value) && @isset_check($value[1]) === self::JS_INBODY){
+                    $elem = new HTMLElement("script", [], [
+                        "src"   =>  $value[0]
+                    ]);
+                    $result .= $elem->getHTML();
+                }
+            }
+        }
 
         return $result;
     }
@@ -338,6 +496,11 @@ class page{
             case(self::HEAD_C):
                 //headタグ
                 $result = $this->genHead($tagType === self::HEAD);
+                break;
+
+            case(self::JS_INBODY):
+                //BODY内に書くjsタグ
+                $result = $this->getScriptInBody();
                 break;
             
             default:

@@ -189,4 +189,8 @@ function rmdir_all(string $path) :bool{
     return false;
 }
 
+function isset_check($value, $default = null){
+    return isset($value) ? $value : $default;
+}
+
 ?>

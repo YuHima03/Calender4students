@@ -1,4 +1,4 @@
-# Calender for <del>Students</del> Everyday-Life (名称未定)
+# calendar for <del>Students</del> Everyday-Life (名称未定)
 **<del>学生の為の</del> 日常生活に役立つ機能が揃うカレンダー**を作ってます（現在開発中）<br />
 Webアプリ（的なやつ）なのでアプリのインストールが不要です<br />
 また、それぞれの端末から同じカレンダーを管理することも可能になる予定です

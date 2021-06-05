@@ -212,7 +212,7 @@ class account{
                                     session_regenerate_id(true);
 
                                     //最終ログイン日時(DBに保存してるやつより詳細なやつ)をセッションにも保存
-                                    $_SESSION["lastLoginTimestamp"] = time();
+                                    $_SESSION["_lastLoginTimestamp"] = time();
                                 }
                                 else{
                                     //削除されたアカウント

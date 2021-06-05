@@ -338,15 +338,14 @@ class page{
                 "none", "notranslate"
             ]
         ],
+        //JSに渡すデータ
+        "sendDataToJS"  =>  true,
+        "sendData"  =>  [],
         //外部から読み込み(相対パス)
         //JS
-        "js"    =>  [
-
-        ],
+        "js"    =>  [],
         //CSS
-        "css"   =>  [
-
-        ]
+        "css"   =>  []
     ];
 
     //////////////////////////////////////////////////
@@ -358,6 +357,8 @@ class page{
     private array $pageInfo = [];
 
     private ?\lang $lang = null;
+
+    private ?string $pageToken = null;
 
     /**
      * @param \account|null &$accountObj 参照渡し
@@ -442,6 +443,21 @@ class page{
                 ]);
             }
         }
+
+        //jsに送るデータ
+        if($pageInfo["sendDataToJS"]){
+            //追加のデータ
+            $PHPData = $pageInfo["sendData"];
+            //必須データ
+            $PHPData = array_merge($PHPData, [
+            ]);
+
+            $PHPDataStr = "PHPData = ".json_encode($PHPData, JSON_UNESCAPED_UNICODE);
+
+            $jsElem = new HTMLElement("script", [], [], true, [$PHPDataStr]);
+            $innerElements[] = $jsElem;
+        }
+
         //js
         if(is_array($js = @isset_check($pageInfo["js"]))){
             foreach($js as $path){

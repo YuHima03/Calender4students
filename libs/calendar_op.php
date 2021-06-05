@@ -5,7 +5,7 @@ include_once __DIR__."/main.php";
 /**
  * カレンダーの操作いろいろ
  */
-class calenderOp{
+class calendarOp{
     /**予定等 */
     public const SCHEDULE = 0;
     /**予定のIDリスト */

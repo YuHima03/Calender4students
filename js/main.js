@@ -16,6 +16,21 @@ function isset(d){
     return (d !== "" && d !== null && d !== undefined);
 }
 
+/**issetの結果によって返す値を変える */
+function isset_check(variable, defaultValue = null){
+    return isset(variable) ? variable : defaultValue;
+}
+
+/**
+ * cookie情報取得
+ * @param {string} key 
+ */
+function getCookie(key){
+    let result = document.cookie.match(new RegExp(`(?<=${key}=)\\w+;|(?<=${key}=)\\w+$`));
+
+    return isset(result) ? result[0] : "";
+}
+
 /**setAttributeを複数回一度に実行 
  * @param {HTMLElement} E Element
  * @param {Object.<string, string>} value {name:value, ...}

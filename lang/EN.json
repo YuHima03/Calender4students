@@ -4,7 +4,7 @@
             "title" :   "Login"
         },
         "main"  :   {
-            "login_title"   :   "Log in to Calender",
+            "login_title"   :   "Log in to calendar",
             "login"         :   "Log in",
             "account_name"  :   "Account name",
             "password"      :   "Password",

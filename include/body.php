@@ -9,7 +9,7 @@ $account_info = $inner_html["login_info"];
 ?>
 
 <header>
-    <h1>Calender 4 Students</h1>
+    <h1>calendar 4 Students</h1>
     <!--account-->
     <div>
         <p>アカウントID：<?=$account_info["name"]?></p>

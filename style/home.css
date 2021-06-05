@@ -45,29 +45,29 @@ header {
 
 
 /*カレンダー本体*/
-#calender {
+#calendar {
     width: 90%;
     margin: 0 auto;
     overflow-x: hidden;
     overflow-y: scroll;
 }
 
-    #calender > div {
+    #calendar > div {
         width: 100%;
         margin: 0;
         padding: 0;
     }
 
-        #calender > div > table.month { /*月の纏まり*/
+        #calendar > div > table.month { /*月の纏まり*/
             width: 100%;
             border-collapse: collapse;
         }
 
-            #calender > div > table.month > tr.week {
+            #calendar > div > table.month > tr.week {
                 height: 5em;
             }
 
-                #calender > div > table.month > tr.week > td.date {
+                #calendar > div > table.month > tr.week > td.date {
                     padding: 0.5em;
                     border: solid 1px gainsboro;
                     transition: ease-out 100ms background-color;
@@ -75,12 +75,12 @@ header {
                     position: relative;
                 }
 
-                    #calender > div > table.month > tr.week > td.date:hover {
+                    #calendar > div > table.month > tr.week > td.date:hover {
                         background-color: #fafafa;
                         cursor: pointer;
                     }
 
-                    #calender > div > table.month > tr.week > td.date::before {
+                    #calendar > div > table.month > tr.week > td.date::before {
                         display: block;
                         content: "";
                         /**/
@@ -100,20 +100,20 @@ header {
                         transition: ease-out 100ms opacity, ease-out 100ms transform;
                     }
 
-                    #calender > div > table.month > tr.week > td.date:active {
+                    #calendar > div > table.month > tr.week > td.date:active {
                         background-color: transparent;
                     }
 
-                    #calender > div > table.month > tr.week > td.date:active::before{
+                    #calendar > div > table.month > tr.week > td.date:active::before{
                         transform: scale(2);
                         opacity: 1;
                     }
 
-                    #calender > div > table.month > tr.week > td.date > div > div:first-child {
+                    #calendar > div > table.month > tr.week > td.date > div > div:first-child {
                         color: #2f2f2f;
                     }
 
-                    #calender > div > table.month > tr.week > td.date.out_of_month > div > div:first-child { /*当月の範囲外の日付*/
+                    #calendar > div > table.month > tr.week > td.date.out_of_month > div > div:first-child { /*当月の範囲外の日付*/
                         color: darkgray;
                         /*opacity: 0.4;*/
                     }

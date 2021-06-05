@@ -1,4 +1,4 @@
-/* 以下に Calender4Students(名称未定) のｋ本的な構造を示す */
+/* 以下に calendar4Students(名称未定) のｋ本的な構造を示す */
 
 root
     app -- アプリに関する部分

@@ -309,7 +309,7 @@ class account{
 
                 //自動ログインのフラグを消す
                 if(isset($_COOKIE["_session_flag"])){
-                    setcookie("_session_flag", "", time()-180, "/");
+                    setcookie("_session_flag", "", time()-3600, "/");
                 }
 
                 $this->setInitAccountInfo();

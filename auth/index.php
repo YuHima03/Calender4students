@@ -18,6 +18,7 @@ if(isset($_POST["timestamp"])){
     if($timestamp <= time() + 5 && time() - 60 <= $timestamp){
         $account = new account();
 
+        //ログイン認証
         if($account->getLoginStatus() === true){
             $result["result"] = true;
         }

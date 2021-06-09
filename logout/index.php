@@ -1,14 +1,11 @@
 <?php
 
-include_once "../libs/C4S_main.php";
+include_once "../libs/page.php";
+include_once "../libs/account.php";
 
 $page = new page();
-$page->set_info([
-    "TITLE" =>  "ログアウト中"
-]);
 
-$account = new account();
-$account->logout("force");
+$page->getAccountObj()->logout(true);
 
 header("Location: ../");
 

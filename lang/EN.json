@@ -1,4 +1,17 @@
 {
+    "gui"   :   {
+        "ok"    :   "OK",
+        "cancel":   "Cancel",
+        "yes"   :   "Yes",
+        "no"    :   "No",
+        "done"  :   "Done",
+        "open"  :   "Open",
+        "close" :   "Close",
+        "save"  :   "Save",
+        "finish":   "Finish",
+        "login" :   "Log in",
+        "logout":   "Log out"
+    },
     "login" :   {
         "pageinfo"  :   {
             "title" :   "Login"

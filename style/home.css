@@ -1,119 +1,17 @@
 /*/// Home CSS ///*/
 
-body {
-    margin: 0;
-    position: relative;
-    cursor: default;
+:root{
+    --header-bg-col: #2f2f2f;
+    --header-font-col: white;
 }
 
-#main_container {
-    height: 100vh;
-    overflow-y: hidden;
+#header_wrap{
+    display: block;
+    width: 100%;
+    background-color: var(--header-bg-col);
+    color: var(--header-font-col);
 }
 
-/*ヘッダー*/
-header {
-    background: #2a2a2a;
-    color: white;
-    margin: 0;
-    padding: 0.75em 2.5em;
+#title_wrap {
+    display: inline-block;
 }
-
-    /*ヘッダー(仮)*/
-    header > h1 {
-        margin: 0;
-        display: inline-block;
-    }
-
-    header > h1+div {
-        display: inline-block;
-        margin-left: 3em;
-    }
-
-        header > h1+div > p {
-            display: inline-block;
-            margin: 0 0.25em;
-        }
-
-        header > h1+div > p > a {
-            color: white;
-        }
-
-            header > h1+div > p > a:hover {
-                text-decoration: none;
-            }
-
-
-/*カレンダー本体*/
-#calendar {
-    width: 90%;
-    margin: 0 auto;
-    overflow-x: hidden;
-    overflow-y: scroll;
-}
-
-    #calendar > div {
-        width: 100%;
-        margin: 0;
-        padding: 0;
-    }
-
-        #calendar > div > table.month { /*月の纏まり*/
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-            #calendar > div > table.month > tr.week {
-                height: 5em;
-            }
-
-                #calendar > div > table.month > tr.week > td.date {
-                    padding: 0.5em;
-                    border: solid 1px gainsboro;
-                    transition: ease-out 100ms background-color;
-                    overflow: hidden;
-                    position: relative;
-                }
-
-                    #calendar > div > table.month > tr.week > td.date:hover {
-                        background-color: #fafafa;
-                        cursor: pointer;
-                    }
-
-                    #calendar > div > table.month > tr.week > td.date::before {
-                        display: block;
-                        content: "";
-                        /**/
-                        position: absolute;
-                        top: 0;
-                        left: 0;
-                        /**/
-                        width: 100%;
-                        height: 100%;
-                        /**/
-                        border-radius: 100%;
-                        transform: scale(0);
-                        background: #f0f0f0;
-                        opacity: 0;
-                        z-index: -1;
-                        /**/
-                        transition: ease-out 100ms opacity, ease-out 100ms transform;
-                    }
-
-                    #calendar > div > table.month > tr.week > td.date:active {
-                        background-color: transparent;
-                    }
-
-                    #calendar > div > table.month > tr.week > td.date:active::before{
-                        transform: scale(2);
-                        opacity: 1;
-                    }
-
-                    #calendar > div > table.month > tr.week > td.date > div > div:first-child {
-                        color: #2f2f2f;
-                    }
-
-                    #calendar > div > table.month > tr.week > td.date.out_of_month > div > div:first-child { /*当月の範囲外の日付*/
-                        color: darkgray;
-                        /*opacity: 0.4;*/
-                    }

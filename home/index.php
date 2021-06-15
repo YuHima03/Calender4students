@@ -6,6 +6,11 @@ $page = new page();
 $account = $page->getAccountObj();
 $lang = $page->getLangObj();
 
+if(!$account->getLoginStatus()){
+    //ログイン画面へ
+    URI::moveto(URI::LOGIN_PAGE());
+}
+
 $page->setPageInfo([
     "title" =>  "ホーム",
     "js"    =>  [
@@ -14,7 +19,8 @@ $page->setPageInfo([
         ["../js/calendar.js", page::JS_INBODY]
     ],
     "css"   =>  [
-        "../css/main.css"
+        "../style/main.css",
+        "../style/home.css"
     ]
 ]);
 
@@ -29,11 +35,19 @@ $page->setPageInfo([
     <!--main_contents-->
     <div id="wrap">
         <header id="header_wrap">
-            <h1>HOME</h1>
-            <div id="accountinfo_wrap">
-                <div id="accountinfo">
-                    <div class="section"><span>ようこそ&nbsp;</span><span><?=$account->getUserName()?></span><span>&nbsp;さん</span><div>
-                    <div class="section"><span>UUID&nbsp;</span><span><?=$account->getUUID()?></span></div>
+            <div id="title_wrap">
+                <h1>C4E</h1>
+            </div>
+            <!--アカウントのメニュー-->
+            <div id="account_menu" class="menu_wrap">
+                <div class="menu_button_wrap">
+                    <!--アイコンをボタンにする-->
+                    <button id="account_menu_button" type="button"><img src="../data/TEMPLATE/icon.png" alt="MENU" /></button>
+                </div>
+                <div class="menu_container">
+                    <div><span>ようこそ&nbsp;</span><span><?=$account->getUserName()?></span><span>&nbsp;さん</span></div>
+                    <div><span>UUID&nbsp;</span><span><?=$account->getUUID()?></span></div>
+                    <div><button type="button" id="account_menu_logout_button"><?=$lang->getWord("gui.logout")?></button></div>
                 </div>
             </div>
         </header>

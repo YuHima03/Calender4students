@@ -8,20 +8,18 @@ $loginResult = false;
 
 $account = new account();
 
-//ログイン処理
-if(isset($_POST["username"], $_POST["pass"], $_SESSION["_ftoken"], $_POST["ftoken"]) && $_SESSION["_ftoken"] === $_POST["ftoken"]){
-    //トークン認証成功
+$token_auth = new token_auth();
+
+if(isset($_POST["username"], $_POST["pass"], $_POST["ftoken"]) && $token_auth->auth($_POST["ftoken"], true, false)){
+    //トークン認証成功(自動削除)
     $account->login($_POST["username"], hash("sha512", $_POST["pass"]), (isset($_POST["auto_login"]) && $_POST["auto_login"] === "on"));
-    //トークンはもう使わない
-    unset($_SESSION["_ftoken"]);
 }
 else{
     //認証失敗(トークン新規生成)
     $account->logout(true, account::ERROR_BAD_LOGIN_REQUEST);
-    $ftoken = getRandStr(32);
-    $_SESSION["_ftoken"] = $ftoken;
-    echo $ftoken;
 }
+
+$token_auth->set_token();
 
 $page = new Page($account);
 
@@ -75,7 +73,7 @@ echo "<pre style='background: whitesmoke;'>", var_dump($page->getPageInfo()), "<
                     </label>
                     <input type="submit" value="ログイン" />
                     <!--トークン-->
-                    <input type="hidden" name="ftoken" value="<?=$ftoken?>" />
+                    <input type="hidden" name="ftoken" value="<?=$token_auth->get_token()?>" />
                 </form>
             </div>
         </div>

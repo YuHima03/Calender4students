@@ -1,12 +1,14 @@
 /* default */
 body {
     margin: 0;
-    background: whitesmoke;
+    display: block;
+    background: white;
     font-family: 'Yu Gothic', system-ui ,-apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-main, header, footer {
-    background: white;
+#wrap {
+    margin: 0;
+    display: block;
 }
 
 * {
@@ -16,10 +18,9 @@ main, header, footer {
 
 a {
     text-decoration: underline;
-    color: rgb(29, 144, 221);
+    color: rgb(6, 139, 228);
 }
 
     a:hover {
         text-decoration: none;
-        transform: rotate(10deg);
     }

@@ -84,7 +84,7 @@ class URI{
     }
 
     public static function LOGIN_PAGE(bool $setRelPATH = true, $get = null) : string{
-        $result = (($setRelPATH) ? URI::RELATIVE_PATH() : "") . "login/";
+        $result = (($setRelPATH) ? URI::RELATIVE_PATH() : "") . "/login/";
         
         if(is_array($get)){
             $result .= "?";
@@ -191,6 +191,60 @@ function rmdir_all(string $path) :bool{
 
 function isset_check($value, $default = null){
     return isset($value) ? $value : $default;
+}
+
+/**
+ * page-token
+ */
+class token_auth{
+    private string $token_name = "a_token";
+    private ?string $token = null;
+
+    private function update_token_info(){
+        $this->token = isset($_SESSION[$this->token_name]) ? $_SESSION[$this->token_name] : null;
+        return;
+    }
+
+    public function __construct(?string $token_name = null){
+        if(is_string($token_name)){
+            $this->token_name = $token_name;
+        }
+
+        $this->update_token_info();
+    }
+
+    public function set_token(){
+        $token = getRandStr(32);
+
+        $this->token = $token;
+        $_SESSION[$this->token_name] = $token;
+        return;
+    }
+
+    public function get_token() :?string{
+        return $this->token;
+    }
+
+    /**
+     * @param $unset 認証成功時に自動削除
+     * @param $regen 認証失敗時に再生成
+     */
+    public function auth(string $token, bool $unset = true, bool $regen = true) :bool{
+        $this->update_token_info();
+        $result = ($token === $this->token);
+
+        if($result && $unset) $this->unset_token();
+        else if(!$result && $regen) $this->set_token();
+
+        return $result;
+    }
+
+    public function unset_token(){
+        $this->token = null;
+        unset($_SESSION[$this->token_name]);
+
+        return;
+    }
 }
 
 ?>

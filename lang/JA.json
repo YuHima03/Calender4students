@@ -8,7 +8,9 @@
         "open"  :   "開く",
         "close" :   "閉じる",
         "save"  :   "保存",
-        "finish":   "終了"
+        "finish":   "終了",
+        "login" :   "ログイン",
+        "logout":   "ログアウト"
     },
     "errors"    :   {
         "error" :   "エラー"

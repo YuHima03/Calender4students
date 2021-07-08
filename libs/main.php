@@ -39,6 +39,9 @@ function exitWithErrorPage(int $errorNum, bool $errorLog = true){
  * いろんなページへの相対パスの取得
  */
 class URI{
+    public const HOME_PAGE = "home/";
+    public const LOGIN_PAGE = "login/";
+
     public static function get_Level() :int{
         $path = substr($_SERVER["SCRIPT_FILENAME"], strlen(preg_replace("/\\\\/", "/", URI::ABSOLUTE_PATH())));
         preg_match_all("/\//", $path, $result, PREG_SET_ORDER);
@@ -49,7 +52,7 @@ class URI{
     /**
      * 最上位フォルダへの相対パス
      */
-    public static function RELATIVE_PATH() : string{
+    public static function RELATIVE_PATH() :string{
         return substr("./".str_repeat("../", URI::get_Level()), 0, -1);
     }
 
@@ -63,7 +66,7 @@ class URI{
     /**
      * GETパラメータをリンクの末尾に設定する
      */
-    public static function add_GET_Param(string $linkText, array $dataList) : string{
+    public static function add_GET_Param(string $linkText, array $dataList) :string{
         if(gettype($dataList) === "array"){
             foreach($dataList as $key => $value){
                 if(preg_match("/((\&|\?)\w+\=\w+)$/", $linkText)){
@@ -83,26 +86,6 @@ class URI{
         }
     }
 
-    public static function LOGIN_PAGE(bool $setRelPATH = true, $get = null) : string{
-        $result = (($setRelPATH) ? URI::RELATIVE_PATH() : "") . "/login/";
-        
-        if(is_array($get)){
-            $result .= "?";
-            $fstFlag = false;
-            foreach($get as $key => $value){
-                if(!$fstFlag){
-                    $fstFlag = true;
-                }
-                else{
-                    $result .= "&";
-                }
-                $result .= "{$key}={$value}";
-            }
-        }
-
-        return $result;
-    }
-
     /**
      * 重大なエラー発生時(続行不能の場合の移動先)
      */
@@ -111,6 +94,10 @@ class URI{
         $result = URI::add_GET_Param(URI::RELATIVE_PATH()."/error/", ["errcode"=>$errorType, "to"=>$to]);
 
         return $result;
+    }
+
+    public static function get_PATH(string $rootPATH){
+        return self::RELATIVE_PATH() . "/" . $rootPATH;
     }
 
     /**
@@ -147,16 +134,23 @@ function getRandStr(int $len = 128, string $mode = null, bool $hex = false) :str
 
 /**
  * UUIDを取得する
+ * @param bool $bin バイナリを取得する
  * @return string
  */
-function getUUID(){
+function getUUID(bool $bin = true) :string{
     //128バイトの乱数生成 (バージョン等指定するために論理積を取る)
     //RRRRRRRR-RRRR-4RRR-rRRR-RRRRRRRRRRRR -> (hex)FFFFFFFF-FFFF-4FFF-rFFF-FFFFFFFFFFFF (r=8,9,A,B)
     $binText_OR  = hex2bin('00000000'.'0000'.'4000'.'8000'.'000000000000');
     $binText_AND = hex2bin('FFFFFFFF'.'FFFF'.'4FFF'.'BFFF'.'FFFFFFFFFFFF');
-    $uuidStr     = bin2hex((random_bytes(16) | $binText_OR) & $binText_AND);
+    $uuidStr     = (random_bytes(16) | $binText_OR) & $binText_AND;
 
-    return substr($uuidStr, 0, 8) . '-' . substr($uuidStr, 8, 4) . '-' . substr($uuidStr, 12, 4) . '-' . substr($uuidStr, 16, 4) . '-' . substr($uuidStr, 20);
+    if($bin){
+        return $uuidStr;
+    }
+    else{
+        $uuidStr = bin2hex($uuidStr);
+        return substr($uuidStr, 0, 8) . '-' . substr($uuidStr, 8, 4) . '-' . substr($uuidStr, 12, 4) . '-' . substr($uuidStr, 16, 4) . '-' . substr($uuidStr, 20);
+    }
 }
 
 /**
@@ -246,5 +240,3 @@ class token_auth{
         return;
     }
 }
-
-?>

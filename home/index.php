@@ -8,13 +8,14 @@ $lang = $page->getLangObj();
 
 if(!$account->getLoginStatus()){
     //ログイン画面へ
-    URI::moveto(URI::LOGIN_PAGE());
+    URI::moveto(URI::get_PATH(URI::LOGIN_PAGE));
 }
 
 $page->setPageInfo([
     "title" =>  "ホーム",
     "js"    =>  [
         "../js/main.js",
+        "../js/elemop.js",
         ["../js/auth.js", page::JS_INBODY],
         ["../js/calendar.js", page::JS_INBODY]
     ],
@@ -45,8 +46,8 @@ $page->setPageInfo([
                     <button id="account_menu_button" type="button"><img src="../data/TEMPLATE/icon.png" alt="MENU" /></button>
                 </div>
                 <div class="menu_container">
-                    <div><span>ようこそ&nbsp;</span><span><?=$account->getUserName()?></span><span>&nbsp;さん</span></div>
-                    <div><span>UUID&nbsp;</span><span><?=$account->getUUID()?></span></div>
+                    <div><span>UserName：&nbsp;</span><span><?=$account->getUserName()?></span></div>
+                    <div><span>UUID：&nbsp;</span><span><?=$account->getUUID()?></span></div>
                     <div><button type="button" id="account_menu_logout_button"><?=$lang->getWord("gui.logout")?></button></div>
                 </div>
             </div>

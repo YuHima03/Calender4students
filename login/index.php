@@ -10,13 +10,19 @@ $account = new account();
 
 $token_auth = new token_auth();
 
-if(isset($_POST["username"], $_POST["pass"], $_POST["ftoken"]) && $token_auth->auth($_POST["ftoken"], true, false)){
-    //トークン認証成功(自動削除)
-    $account->login($_POST["username"], hash("sha512", $_POST["pass"]), (isset($_POST["auto_login"]) && $_POST["auto_login"] === "on"));
+if($account->getLoginStatus()){
+    //ログイン済み -> ホームへ移動
+    URI::moveto(URI::get_PATH(URI::HOME_PAGE));
 }
 else{
-    //認証失敗(トークン新規生成)
-    $account->logout(true, account::ERROR_BAD_LOGIN_REQUEST);
+    if(isset($_POST["username"], $_POST["pass"], $_POST["ftoken"]) && $token_auth->auth($_POST["ftoken"], true, false)){
+        //トークン認証成功(自動削除)
+        $account->login($_POST["username"], hash("sha512", $_POST["pass"]), (isset($_POST["auto_login"]) && $_POST["auto_login"] === "on"));
+    }
+    else{
+        //認証失敗(トークン新規生成)
+        $account->logout(true, account::ERROR_BAD_LOGIN_REQUEST);
+    }
 }
 
 $token_auth->set_token();
@@ -24,7 +30,6 @@ $token_auth->set_token();
 $page = new Page($account);
 
 //以下デバッグ用
-
 if($account->getLoginStatus()){
     echo $account->getUserName()."としてログイン済みです".page::BR_TAG;
 }

@@ -125,7 +125,7 @@ class account{
                         $sql = "SELECT * FROM `account`, `login_session` WHERE `login_session`.`token`=? AND `account`.`uuid` = `login_session`.`uuid`";
                         $stmt = $DB->prepare($sql);
 
-                        if($stmt->execute([$_SESSION["_token"]])){
+                        if($stmt->execute([hex2bin($_SESSION["_token"])])){
                             if($stmt->rowCount() === 1){
                                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -196,7 +196,7 @@ class account{
                                             $this->lastError = account::ERROR_TOO_MUCH_RETRY;
                                             return false;
                                         }
-                                    }while(!$stmt->execute([$result["uuid"], date("Y-m-d"), $token, (int)$autoLogin]));
+                                    }while(!$stmt->execute([$result["uuid"], date("Y-m-d"), hex2bin($token), (int)$autoLogin]));
 
                                     unset($retryConter);
 
@@ -249,7 +249,7 @@ class account{
                     $sql = "UPDATE `login_session` SET `last_login`=? WHERE `token`=?";
                     $stmt = $DB->prepare($sql);
 
-                    if(!$stmt->execute([date("Y-m-d"), $token])){
+                    if(!$stmt->execute([date("Y-m-d"), hex2bin($token)])){
                         throw new Exception();
                     }
                 }

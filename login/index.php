@@ -16,20 +16,26 @@ if($account->getLoginStatus()){
 }
 else{
     if(isset($_POST["username"], $_POST["pass"], $_POST["ftoken"]) && $token_auth->auth($_POST["ftoken"], true, false)){
-        //トークン認証成功(自動削除)
-        $account->login($_POST["username"], hash("sha512", $_POST["pass"]), (isset($_POST["auto_login"]) && $_POST["auto_login"] === "on"));
+        //トークン認証成功
+        if($account->login($_POST["username"], hex2bin(hash("sha512", $_POST["pass"])), (isset($_POST["auto_login"]) && $_POST["auto_login"] === "on"))){
+            //ログイン認証成功
+            URI::moveto(URI::get_PATH(URI::HOME_PAGE));
+        }
+        else{
+            //失敗
+            $account->logout(true, account::ERROR_BAD_LOGIN_REQUEST);
+        }
     }
     else{
-        //認証失敗(トークン新規生成)
-        $account->logout(true, account::ERROR_BAD_LOGIN_REQUEST);
+        //認証失敗
+        $token_auth->set_token();
     }
 }
-
-$token_auth->set_token();
 
 $page = new Page($account);
 
 //以下デバッグ用
+/*
 if($account->getLoginStatus()){
     echo $account->getUserName()."としてログイン済みです".page::BR_TAG;
 }
@@ -42,17 +48,17 @@ if($account->isAdmin()){
 }
 else if($account->isDeveloper()){
     echo "あなたはデベロッパです".page::BR_TAG;
-}
+}*/
 
 $page->setPageInfo([
     "title" =>  "ログイン"
 ]);
-echo "<pre style='background: whitesmoke;'>", var_dump($page->getPageInfo()), "</pre>";
+//echo "<pre style='background: whitesmoke;'>", var_dump($page->getPageInfo()), "</pre>";
 
 ?>
 
 <!DOCTYPE html>
-<html lang="ja" id="_login" <?=page::OGP_PREFIX?>>
+<html lang="ja" id="login" <?=page::OGP_PREFIX?>>
 <head>
     <?=$page->genPage(page::HEAD_C)?>
 </head>

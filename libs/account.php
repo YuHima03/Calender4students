@@ -108,7 +108,7 @@ class account{
     /**
      * ログインする (ログイン情報の更新時のみ使用)
      * @param string|null $userName nullの場合はcookieとセッションより再ログイン
-     * @param string|null $pass SHA256で暗号化したものをぶち込む
+     * @param string|null $pass SHA256で暗号化したバイナリデータ
      * @return bool ログインの成功/失敗
      */
     public function login(?string $userName = null, ?string $pass = null, bool $autoLogin = false) :bool {
@@ -136,7 +136,7 @@ class account{
                                 if($expireCheck || $autoLoginCheck){
                                     if(is_null($result["delete_date"])){
                                         //再ログイン成功
-                                        $token = $result["token"];
+                                        $token_bin = $result["token"];
                                     }
                                     else{
                                         //アカウント削除済み
@@ -169,7 +169,7 @@ class account{
                     //新規ログイン
                     $this->loginMode = false;
 
-                    if(strlen($pass) === 128){
+                    if(strlen($pass) === 64){
                         $this->logout(true);
 
                         $sql = "SELECT * FROM `account` WHERE `name`=? AND `pass`=?";
@@ -178,6 +178,7 @@ class account{
                         if($stmt->execute([$userName, $pass])){
                             if($stmt->rowCount() === 1){
                                 //認証成功
+                                /** DBからのデータなのでUUIDはバイナリ */
                                 $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
                                 if(is_null($result["delete_date"])){
@@ -188,7 +189,7 @@ class account{
                                     $retryConter = 0;
                                     do{
                                         if($retryConter < 10){
-                                            $token = getRandStr(128, "sha256");
+                                            $token_bin = getRandStr(128, "sha256");
                                             $retryConter++;
                                         }
                                         else{
@@ -196,12 +197,13 @@ class account{
                                             $this->lastError = account::ERROR_TOO_MUCH_RETRY;
                                             return false;
                                         }
-                                    }while(!$stmt->execute([$result["uuid"], date("Y-m-d"), hex2bin($token), (int)$autoLogin]));
-
-                                    unset($retryConter);
+                                    }while(!$stmt->execute([$result["uuid"], date("Y-m-d"), $token_bin, (int)$autoLogin]));
 
                                     //セッションにトークンを保存
-                                    $_SESSION["_token"] = $token;
+                                    $_SESSION["_token"] = bin2hex($token_bin);
+                                    
+                                    //いろいろ消しとく
+                                    unset($token_bin, $retryConter);
 
                                     //セッションのフラグを立てる(自動ログイン無効時の判定用)
                                     if(!$autoLogin){
@@ -249,7 +251,7 @@ class account{
                     $sql = "UPDATE `login_session` SET `last_login`=? WHERE `token`=?";
                     $stmt = $DB->prepare($sql);
 
-                    if(!$stmt->execute([date("Y-m-d"), hex2bin($token)])){
+                    if(!$stmt->execute([date("Y-m-d"), $token_bin])){
                         throw new Exception();
                     }
                 }
@@ -296,7 +298,7 @@ class account{
                         $sql = "DELETE FROM `login_session` WHERE `token`=?";
                         $stmt = $DB->prepare($sql);
 
-                        if(!$stmt->execute([$_SESSION["_token"]])){
+                        if(!$stmt->execute([hex2bin($_SESSION["_token"])])){
                             throw new Exception();
                         }
                     }
@@ -306,6 +308,9 @@ class account{
 
                     unset($_SESSION["_token"]);
                 }
+
+                //最終ログイン日時も消す
+                unset($_SESSION["_lastLoginTimestamp"]);
 
                 //自動ログインのフラグを消す
                 if(isset($_COOKIE["_session_flag"])){
@@ -356,7 +361,7 @@ class account{
                                 if($retryConter < 10){
                                     $uuid = getUUID();
                                     $name = getRandStr(32);
-                                    $pass = getRandStr(128, "sha512");
+                                    $pass = NULL;
                                     $encryptKey = getRandStr(32, null, true);
 
                                     $retryConter++;
@@ -378,7 +383,7 @@ class account{
                             //      - 半角英数字と記号(!#$%&()~_\/+|=)の6~32文字
                             //      - 数字と半角英字がそれぞれ1文字以上
                             if(preg_match("/^[a-zA-Z0-9_]{4,32}$/", $userName) && preg_match("/^[a-zA-Z0-9_\!\#\$\%\&\(\)\~_\/\\\+\=\|]{6,32}$/", $pass) && preg_match("/\d+/", $pass) && preg_match("/[A-Za-z]+/", $pass) && preg_match("/^\d{4}-\d{2}-\d{2}$/", $birthday) && preg_match("/^\S+@\S+\.[^\.\s]+$/", $email)){
-                                $pass = hash("sha512", $pass);
+                                $pass = hex2bin(hash("sha512", $pass));
 
                                 $sql = "INSERT INTO `account` (`uuid`, `name`, `pass`, `encrypt_key`, `birthday`, `email`) VALUES (?, ?, ?, ?, ?, ?)";
                                 $stmt = $DB->prepare($sql);
@@ -438,6 +443,7 @@ class account{
 
     /**
      * アカウント削除 (ログアウト)
+     * 通常は削除フラグを立てるのみ (復元用、利用はしない)
      * @param bool $completely 完全に削除(復元不可)にする (仮登録アカウント等に利用：まじで復元不可になるので取扱注意)
      */
     public function deleteAccount(bool $completely = false) :bool{
@@ -456,11 +462,14 @@ class account{
 
                         //ファイル削除
                         if(isset($this->uuid)){
-                            $dirn = dirname(__DIR__)."/data/{$this->uuid}";
+                            $uuid = bin2hex($this->uuid);
+                            $dirn = dirname(__DIR__)."/data/{$uuid}";
 
                             if(!rmdir_all($dirn)){
                                 throw new Exception();
                             }
+
+                            unset($uuid);
                         }
                     }
                     else{

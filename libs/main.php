@@ -41,6 +41,7 @@ function exitWithErrorPage(int $errorNum, bool $errorLog = true){
 class URI{
     public const HOME_PAGE = "home/";
     public const LOGIN_PAGE = "login/";
+    public const SIGNUP_PAGE = "signup/";
 
     public static function get_Level() :int{
         $path = substr($_SERVER["SCRIPT_FILENAME"], strlen(preg_replace("/\\\\/", "/", URI::ABSOLUTE_PATH())));
@@ -113,13 +114,13 @@ class URI{
  * ランダムな文字列を返す(`$len`の長さの文字列を`$mode`でハッシュ化する)
  * @param int $len 長さ
  * @param string $mode ハッシュ化の種類(`null`でハッシュ化なし)
- * @param bool $hex ランダムな16進数を利用する
+ * @param bool $hex ランダムなバイナリを利用する
  */
-function getRandStr(int $len = 128, string $mode = null, bool $hex = false) :string {
+function getRandStr(int $len = 128, string $mode = null, bool $bin = false) :string {
     $result = "";
 
-    if($hex){
-        $result = bin2hex(openssl_random_pseudo_bytes($len/2));
+    if($bin){
+        $result = openssl_random_pseudo_bytes($len/2);
     }
     else{
         $str = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -191,7 +192,7 @@ function isset_check($value, $default = null){
  * page-token
  */
 class token_auth{
-    private string $token_name = "a_token";
+    private string $token_name = "auth_token";
     private ?string $token = null;
 
     private function update_token_info(){
@@ -228,7 +229,7 @@ class token_auth{
         $result = ($token === $this->token);
 
         if($result && $unset) $this->unset_token();
-        else if(!$result && $regen) $this->set_token();
+        if(!$result && $regen) $this->set_token();
 
         return $result;
     }

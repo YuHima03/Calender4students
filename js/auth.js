@@ -6,9 +6,9 @@
  * @version 1.0.0
  */
 
-let authPageURL = "http://localhost/calendar4Students/auth/";
+const authPageURL = "http://localhost/calendar4Students/auth/";
 
-async function auth(){
+async function auth() {
     let result = null;
 
     //送信データ
@@ -17,16 +17,16 @@ async function auth(){
 
     //認証
     await fetch(authPageURL, {
-        method  :   "POST",
-        cache   :   "no-cache",
-        body    :   data
+        method: "POST",
+        cache: "no-cache",
+        body: data
     })
-    .then(async (response) => {
-        result = await response.json();
-    })
-    .catch(async (reject) => {
-        result = reject;
-    });
+        .then(async (response) => {
+            result = await response.json();
+        })
+        .catch(async (reject) => {
+            result = reject;
+        });
 
     return result;
 }

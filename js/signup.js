@@ -39,18 +39,19 @@ function err_msg(className, innerHTML, parentElement, targetInputElement, update
 
 /// DOMツリー読み込み後 ///
 window.addEventListener("load", () => {
-    let FORM = document.create_account;
+    /**@type {HTMLFormElement} */
+    const FORM = document.create_account;
 
     //ID
-    FORM.name.addEventListener("input", (e) => {
-        let name = FORM.name;
+    FORM.username.addEventListener("input", (e) => {
+        let username = FORM.username;
         let value = e.target.value;
         let chk_regexp = /^[A-Za-z0-9_]{4,32}$/;
 
         //正規表現で書式チェック
         if (chk_regexp.test(value)) {
             //適切な書式
-            name.classList.remove("err");
+            username.classList.remove("err");
             if (isset(FORM.querySelector(".wrong_format_msg"))) FORM.querySelector(".wrong_format_msg").remove();
 
             //fetchでIDチェッカーを叩く
@@ -67,24 +68,24 @@ window.addEventListener("load", () => {
                         .then(jsonData => {
                             if (!jsonData[0]) {
                                 //既に使われてる
-                                name.classList.add("err");
-                                err_msg("used_name_msg", "このIDは既に使用されています", FORM, FORM.name, false);
+                                username.classList.add("err");
+                                err_msg("used_username_msg", "このIDは既に使用されています", FORM, FORM.username, false);
                             }
                             else {
                                 //未使用
-                                FORM.name.classList.remove("err");
-                                if (isset(FORM.querySelector(".used_name_msg"))) FORM.querySelector(".used_name_msg").remove();
+                                FORM.username.classList.remove("err");
+                                if (isset(FORM.querySelector(".used_username_msg"))) FORM.querySelector(".used_username_msg").remove();
                             }
                         });
                 });
         }
         else {
             //IDチェッカーとは一度goodbye
-            if (isset(FORM.querySelector(".used_name_msg"))) FORM.querySelector(".used_name_msg").remove();
+            if (isset(FORM.querySelector(".used_username_msg"))) FORM.querySelector(".used_username_msg").remove();
 
             //書式が不適
-            name.classList.add("err");
-            err_msg("wrong_format_msg", "使用できない文字が含まれています、使用できるのは英数字(A~Z,a~z,0~9)とアンダーバー\"_\"のみです", FORM, FORM.name);
+            username.classList.add("err");
+            err_msg("wrong_format_msg", "使用できない文字が含まれています、使用できるのは英数字(A~Z,a~z,0~9)とアンダーバー\"_\"のみです", FORM, FORM.username);
         }
     });
 
@@ -190,5 +191,27 @@ window.addEventListener("load", () => {
             pass_chk.classList.remove("err");
             FORM.querySelector(".wrong_passchk_msg").remove();
         }
+    });
+
+    FORM.addEventListener("submit", ev => {
+        ev.preventDefault();        
+
+        const data = new FormData();
+        data.append("name", FORM.username.value);
+        data.append("pass", FORM.pass.value);
+        data.append("form_token", FORM.form_token.value);
+
+        //fetchで叩く
+        fetch("./signup.php", {
+            method: "POST",
+            cache: "no-cache",
+            body: data
+        })
+            .then(r => {
+                r.json()
+                    .then(jsonData => {
+                        console.log(jsonData);
+                    });
+            });
     });
 });

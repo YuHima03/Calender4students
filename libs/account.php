@@ -189,7 +189,7 @@ class account{
                                     $retryConter = 0;
                                     do{
                                         if($retryConter < 10){
-                                            $token_bin = getRandStr(128, "sha256");
+                                            $token_bin = openssl_random_pseudo_bytes(32);
                                             $retryConter++;
                                         }
                                         else{
@@ -382,8 +382,9 @@ class account{
                             //  $pass
                             //      - 半角英数字と記号(!#$%&()~_\/+|=)の6~32文字
                             //      - 数字と半角英字がそれぞれ1文字以上
-                            if(preg_match("/^[a-zA-Z0-9_]{4,32}$/", $userName) && preg_match("/^[a-zA-Z0-9_\!\#\$\%\&\(\)\~_\/\\\+\=\|]{6,32}$/", $pass) && preg_match("/\d+/", $pass) && preg_match("/[A-Za-z]+/", $pass) && preg_match("/^\d{4}-\d{2}-\d{2}$/", $birthday) && preg_match("/^\S+@\S+\.[^\.\s]+$/", $email)){
-                                $pass = hex2bin(hash("sha512", $pass));
+                            if(preg_match("/^[a-zA-Z0-9_]{4,32}$/", $userName) && preg_match("/^[a-zA-Z0-9_\!\#\$\%\&\(\)\~_\/\\\+\=\|]{6,32}$/", $pass) && preg_match("/\d+/", $pass) && preg_match("/[A-Za-z]+/", $pass) /*&& preg_match("/^\d{4}-\d{2}-\d{2}$/", $birthday) && preg_match("/^\S+@\S+\.[^\.\s]+$/", $email)*/){
+                                $pass = hash("sha512", $pass);
+                                $pass_bin = hex2bin($pass);
 
                                 $sql = "INSERT INTO `account` (`uuid`, `name`, `pass`, `encrypt_key`, `birthday`, `email`) VALUES (?, ?, ?, ?, ?, ?)";
                                 $stmt = $DB->prepare($sql);
@@ -400,7 +401,7 @@ class account{
                                         $this->lastError = account::ERROR_TOO_MUCH_RETRY;
                                         return false;
                                     }
-                                }while($stmt->execute([$uuid, $userName, $pass, $encryptKey, $birthday, $email]));
+                                }while(!$stmt->execute([$uuid, $userName, $pass_bin, $encryptKey, $birthday, $email]));
                             }
                             else{
                                 $this->lastError = account::ERROR_INCORRECT_FORMAT;
@@ -423,7 +424,7 @@ class account{
 
                 //ログイン処理
                 if($login){
-                    return $this->login($userName, $pass);
+                    return $this->login($userName, hex2bin($pass));
                 }
             }
             else{

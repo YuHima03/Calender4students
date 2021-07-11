@@ -10,35 +10,7 @@ $account = $page->getAccountObj();
 $auth = new token_auth();
 
 if($account->getLoginStatus()){
-    header("Location: ../home/");
-    exit();
-}
-else{
-    if(isset($_POST["name"]) && isset($_POST["pass"])){
-        if(isset($_POST["form_token"]) && $auth->auth($_POST["form_token"], true, false)){
-            $page->setPageInfo([
-                "title" =>  "処理中..."
-            ]);
-
-            $name = $_POST["name"];
-            $pass = $_POST["pass"];
-
-            if($account->create($name, $pass)){
-                //アカウント作成&ログイン成功
-                URI::moveto(URI::get_PATH(URI::HOME_PAGE));
-            }
-            else{
-                //アカウント作成失敗
-                URI::moveto(URI::get_PATH(URI::SIGNUP_PAGE));
-            }
-
-            exit;
-        }
-        else{
-            //トークン認証失敗
-            URI::moveto(URI::get_PATH(URI::SIGNUP_PAGE));
-        }
-    }
+    URI::moveto(URI::get_PATH(URI::HOME_PAGE));
 }
     
 $page->setPageInfo([
@@ -70,7 +42,7 @@ $form_token = $auth->get_token();
         <div id="create_form">
             <form id="create_account" name="create_account" action="" method="POST" >
                 <p>ID<span class="small">※4~32文字で、英数字(A~Z,a~z,0~9)と'_'(アンダーバー)が利用可能です</span></p>
-                <input type="text" name="name" value="" required />
+                <input type="text" name="username" value="" required />
                 <p>パスワード<span class="small">※6~32文字で、英文字(A~Z,a~z)と数字(0~9)を共に含んでいる必要があります</span></p>
                 <input type="password" name="pass" required />
                 <p>パスワード(確認)<span class="small">※クリップボードからの貼り付けは出来ません</span></p>

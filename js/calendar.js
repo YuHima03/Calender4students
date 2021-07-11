@@ -26,20 +26,21 @@ class Calendar{
     }
 }
 
-/**
- * 月間カレンダーの更新
- * @param {number} year 
- * @param {number} month 
- * @param {number} reload 情報を再読み込みするかどうか
- */
-async function updateMonthlyCalendar(year, month, reload = true){
-    let calendar = document.createElement("table");
-    calendar.id = "calendar_table";
-}
-
-window.onload = async () => {
+window.addEventListener("load", async () => {
     let calendar = new Calendar();
     let calendarTableWrap = document.getElementById("calendar_table_wrap");
 
-    
-}
+    const ws = new WebSocket("ws://localhost:8080");
+
+    ws.addEventListener("open", () => {
+        console.log("WebSocket was opened");
+    });
+
+    ws.addEventListener("message", msg => {
+        console.log(`Message from ws => ${msg.data}`)
+    });
+
+    ws.addEventListener("close", () => {
+        console.log("WebSocket was closed");
+    });
+});

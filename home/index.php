@@ -16,7 +16,7 @@ $page->setPageInfo([
     "js"    =>  [
         "../js/main.js",
         "../js/elemop.js",
-        ["../js/auth.js", page::JS_INBODY],
+        "../js/auth.js",
         ["../js/calendar.js", page::JS_INBODY]
     ],
     "css"   =>  [
@@ -47,7 +47,7 @@ $page->setPageInfo([
                 </div>
                 <div class="menu_container">
                     <div><span>UserName：&nbsp;</span><span><?=$account->getUserName()?></span></div>
-                    <div><span>UUID：&nbsp;</span><span><?=$account->getUUID()?></span></div>
+                    <div><span>UUID：&nbsp;</span><span><?=bin2hex($account->getUUID())?></span></div>
                     <div><button type="button" id="account_menu_logout_button"><?=$lang->getWord("gui.logout")?></button></div>
                 </div>
             </div>

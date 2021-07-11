@@ -114,19 +114,20 @@ class URI{
  * ランダムな文字列を返す(`$len`の長さの文字列を`$mode`でハッシュ化する)
  * @param int $len 長さ
  * @param string $mode ハッシュ化の種類(`null`でハッシュ化なし)
- * @param bool $hex ランダムなバイナリを利用する
+ * @param bool $hex ランダムな16進数を利用する
  */
-function getRandStr(int $len = 128, string $mode = null, bool $bin = false) :string {
+function getRandStr(int $len = 128, string $mode = null, bool $hex = false) :string {
     $result = "";
 
-    if($bin){
-        $result = openssl_random_pseudo_bytes($len/2);
+    if($hex){
+        $result = bin2hex(openssl_random_pseudo_bytes($len/2));
     }
     else{
-        $str = "abcdefghijklmnopqrstuvwxyz0123456789";
+        $str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        $slen = strlen($str);
 
         for($i = 0; $i < $len; $i++){
-            $result .= $str[rand(0, strlen($str)-1)];
+            $result .= $str[rand(0, $slen-1)];
         }
     }
 

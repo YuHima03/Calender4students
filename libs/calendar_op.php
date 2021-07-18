@@ -17,7 +17,7 @@ class calendarOp{
         "", "id_list"
     ];
 
-    private \account $account = null;
+    private ?\account $account = null;
 
     private ?string $dirpath = null;
 
@@ -37,7 +37,7 @@ class calendarOp{
             case(self::ID_LIST):
             case(self::TAG_LIST):
                 if(strlen($fileName) !== 0){
-                    throw new Error("Invalid `fileName` value, which must be empty string");
+                    throw new Error("Invalid `fileName` value. It must be empty string");
                     return false;
                 }
                 break;
@@ -76,7 +76,7 @@ class calendarOp{
     /**
      * @return array|false
      */
-    public function getJSON(int $fileType, string $fileName){
+    private function getJSON(int $fileType, string $fileName){
         if($this->account->getLoginStatus() && is_string($this->dirpath) && is_dir($this->dirpath)){
             if(($fullFileName = self::getFullFileName($fileType, $fileName)) === false){
                 return false;
@@ -124,7 +124,7 @@ class calendarOp{
         }
     }
 
-    public function updateJSON(int $fileType, string $fileName = "", array $data = []) :bool{
+    private function updateJSON(int $fileType, string $fileName = "", array $data = []) :bool{
         $returnResult = false;
         $timestamp = time();
 
@@ -166,6 +166,136 @@ class calendarOp{
 
         //ファイルのコピペで終了
         return $returnResult && copy($binFilePath, dirname($binFilePath)."/{$fileName}.dat") && copy($ivFilePath, dirname($ivFilePath)."/{$fileName}_iv.dat");
+    }
+}
+
+//上のやつは使わない(開発参考用に残すけどあとで消す)
+
+/**
+ * カレンダー情報の操作
+ */
+class calendar_op{
+    private ?\account $account = null;
+    private ?string $path = null;
+
+    /**
+     * @param null|account $accountObj `null`の場合は新規作成される
+     */
+    public function __construct(?\account $accountObj = null) {
+        $this->account = $accountObj ?? new account();
+
+        //フォルダへのパス
+        $this->path = URI::get_PATH("data/{$this->account->getUUID()}/");
+
+        //フォルダが存在しない場合は新規作成
+        if(!is_dir($this->path)) $this->init();
+    }
+
+    /**
+     * 暗号化する
+     * @return string 生のバイナリデータを返す
+     */
+    static private function file_encryption(string $plain, string $key, string $ivector) :string {
+        return base64_decode(openssl_encrypt($plain, "AES-256-CBC", $key, 0, $ivector));
+    }
+
+    /** 
+     * 復号する
+     * @param string $cipher 生のバイナリデータ
+     */
+    static private function file_decryption(string $cipher, string $key, string $ivector) :string {
+        return openssl_decrypt(base64_encode($cipher), "AES-256-CBC", $key, 0, $ivector);
+    }
+
+    /** 
+     * 初期ベクトルを取得
+     * @return string バイナリデータ
+     */
+    private function get_ivector() :string {
+        $iv_file_path = $this->path . "iv.dat";
+
+        $file = new SplFileObject($iv_file_path, "rb");
+        $file->flock(LOCK_SH);
+
+        //$iv_hex = unpack("H*", $file->fread($file->getSize()));
+        $iv_bin = $file->fread($file->getSize());
+
+        $file->flock(LOCK_UN);
+        unset($file);
+
+        return $iv_bin;
+    }
+
+    private function save_ivector(string $ivector) {
+        
+    }
+
+    /**
+     * 必須ファイルの新規作成
+     */
+    private function init() /*:bool*/ {
+
+    }
+
+    /**
+     * @param string $file_name 拡張子は無し
+     */
+    private function get_decrypted_data(string $file_name, int $lock_mode = LOCK_SH) :string{
+        //必要な情報を取得
+        $iv = $this->get_ivector();
+        $key = $this->account->getEncryptKey();
+
+        $file = new SplFileObject($file_name . ".dat");
+        $file->flock($lock_mode);
+
+        //バイナリデータ(暗号化されてる)
+        $cipher = $file->fread($file->getSize());
+
+        $file->flock(LOCK_UN);
+        unset($file);
+
+        return $this->file_decryption($cipher, $key, $iv);
+    }
+
+    /**
+     * @param string $file_name 拡張子は無し
+     */
+    private function save_encrypted_data(string $file_name, string $data, int $lock_mode = LOCK_EX) :bool{
+        //必要な情報を取得
+        $iv = $this->get_ivector();
+        $key = $this->account->getEncryptKey();
+
+        //ファイル破損防止の為に最初は名前に_newをつける
+        $file = new SplFileObject($file_name . "_new.dat", "wb");
+        $file->flock($lock_mode);
+
+        //一応丸める
+        $file->ftruncate(0);
+
+        $cipher = $this->file_encryption($data, $key, $iv);
+        $file->fwrite($cipher);
+
+        $file->flock(LOCK_UN);
+        unset($file);
+
+        $result = true;
+
+        //置き換え前のやつを_oldに改名
+        $result &= rename($file_name . ".dat", $file_name . "_old.dat");
+
+        //_newを無印に改名
+        $result &= $result && rename($file_name . "_new.dat", $file_name . ".dat");
+
+        return $result;
+    }
+
+    /**
+     * ファイルは年月で分けてるので日のデータはこの関数の戻り値から取得できる
+     */
+    private function get_schedules_filedata(?int $year = null, ?int $month = null) :array {
+        $result = json_decode("str", true);
+
+        return $result;
     }
 }
 

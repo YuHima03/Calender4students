@@ -21,8 +21,22 @@ class Calendar{
         return;
     }
 
-    async getData(flag){
+    async getData(){
+        const f_data = {
+            type: "a"
+        };
 
+        /**@typse {{}} */
+        const opResData = await fetch("../req/data_op.php", {
+            method: "POST",
+            cache: "no-cache",
+            body: JSON.stringify(f_data)
+        })
+            .then(async opResult => {
+                return await opResult.json()
+            });
+
+        console.log(opResData);
     }
 }
 
@@ -30,17 +44,5 @@ window.addEventListener("load", async () => {
     let calendar = new Calendar();
     let calendarTableWrap = document.getElementById("calendar_table_wrap");
 
-    const ws = new WebSocket("ws://localhost:8080");
-
-    ws.addEventListener("open", () => {
-        console.log("WebSocket was opened");
-    });
-
-    ws.addEventListener("message", msg => {
-        console.log(`Message from ws => ${msg.data}`)
-    });
-
-    ws.addEventListener("close", () => {
-        console.log("WebSocket was closed");
-    });
+    console.log(await calendar.getData());
 });

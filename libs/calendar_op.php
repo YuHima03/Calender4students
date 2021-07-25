@@ -185,7 +185,7 @@ class calendar_op{
         $this->account = $accountObj ?? new account();
 
         //フォルダへのパス
-        $this->path = URI::get_PATH("data/{$this->account->getUUID()}/");
+        $this->path = URI::get_PATH("data/{$this->account->getUUID(true)}/");
 
         //フォルダが存在しない場合は新規作成
         if(!is_dir($this->path)) $this->init();
@@ -214,33 +214,53 @@ class calendar_op{
     private function get_ivector() :string {
         $iv_file_path = $this->path . "iv.dat";
 
-        $file = new SplFileObject($iv_file_path, "rb");
-        $file->flock(LOCK_SH);
+        if(file_exists($iv_file_path)){
+            $file = new SplFileObject($iv_file_path, "rb");
+            $file->flock(LOCK_SH);
 
-        //$iv_hex = unpack("H*", $file->fread($file->getSize()));
-        $iv_bin = $file->fread($file->getSize());
+            //$iv_hex = unpack("H*", $file->fread($file->getSize()));
+            $iv_bin = $file->fread($file->getSize());
 
-        $file->flock(LOCK_UN);
-        unset($file);
+            $file->flock(LOCK_UN);
+            unset($file);
+        }
+        else{
+            //新規作成
+            $iv_bin = openssl_random_pseudo_bytes(16);
+            $this->save_ivector($iv_bin);
+        }
 
         return $iv_bin;
     }
 
-    private function save_ivector(string $ivector) {
-        
+    private function save_ivector(string $ivector) :bool {
+        $iv_file_path = $this->path . "iv";
+
+        $file = new SplFileObject($iv_file_path . "_new.dat", "wb");
+        $file->flock(LOCK_EX);
+
+        $file->ftruncate(0);
+        $file->fwrite($ivector);
+
+        $file->flock(LOCK_UN);
+        unset($file);
+
+        return rename($iv_file_path . "_new.dat", $iv_file_path . ".dat");
     }
 
     /**
      * 必須ファイルの新規作成
      */
-    private function init() /*:bool*/ {
+    private function init() :bool {
+        $dir_path = $this->path;
 
+        return mkdir($dir_path, 0764);
     }
 
     /**
      * @param string $file_name 拡張子は無し
      */
-    private function get_decrypted_data(string $file_name, int $lock_mode = LOCK_SH) :string{
+    private function get_decrypted_data(string $file_name, int $lock_mode = LOCK_SH) :string {
         //必要な情報を取得
         $iv = $this->get_ivector();
         $key = $this->account->getEncryptKey();
@@ -260,7 +280,7 @@ class calendar_op{
     /**
      * @param string $file_name 拡張子は無し
      */
-    private function save_encrypted_data(string $file_name, string $data, int $lock_mode = LOCK_EX) :bool{
+    private function save_encrypted_data(string $file_name, string $data, int $lock_mode = LOCK_EX) :bool {
         //必要な情報を取得
         $iv = $this->get_ivector();
         $key = $this->account->getEncryptKey();
@@ -291,11 +311,76 @@ class calendar_op{
 
     /**
      * ファイルは年月で分けてるので日のデータはこの関数の戻り値から取得できる
+     * @return array
      */
-    private function get_schedules_filedata(?int $year = null, ?int $month = null) :array {
-        $result = json_decode("str", true);
+    private function get_schedules_filedata(?int $year = null, ?int $month = null) {
+        $result = [];
+
+        if(is_null($year)){
+            //データフォルダの中の全ファイル
+            if(is_resource($dir = opendir($this->path))){
+                while(false !== ($entry = readdir($dir))){
+                    if(preg_match("/^sch_(\d{4})_(\d{2})\.dat$/", $entry, $matches) && sizeof($matches) === 3){
+                        $result[] = $this->get_schedules_filedata((int)$matches[1], (int)$matches[2]);
+                    }
+                }
+
+                closedir($dir);
+            }
+            else throw new Error("Failed to open directory");
+        }
+        else if(is_null($month)){
+            //1~12月まで回す
+            for($i = 1; $i <= 12; $i++){
+                $result[] = $this->get_schedules_filedata($year, $i);
+            }
+        }
+        else if(between($month, 0, 12, true)){
+            $yearStr = (string)$year;
+            $monthStr = num2str($month, 2);
+
+            $schlist_path = $this->path . "sch_{$yearStr}_{$monthStr}";
+
+            if(file_exists($schlist_path)){
+                $result = json_decode($this->get_decrypted_data($schlist_path));
+            }
+        }
 
         return $result;
+    }
+
+    /**
+     * @param (null|int)[][] $stmt
+     */
+    public function get_schedules(array $stmt) :array {
+        $result = [];
+
+        foreach($stmt as $info){
+            //yearプロパティは必須(全取得は`get_all_schedules`で)
+            if(isset($info["year"])){
+                $year = (int)$info["year"];
+                $month = isset($info["month"]) ? (int)$info["month"] : null;
+                $date = isset($info["date"]) ? (int)$info["date"] : null;
+
+                $file_data = $this->get_schedules_filedata($year, $month);
+
+                if(!is_null($date) && between($date, 1, 12, true)){
+                    //日付指定あり
+                }
+                else{
+                    //なし -> 全部
+                }
+
+                $result
+            }
+            else throw new Error("`year` property not found");
+        }
+
+        return $result;
+    }
+
+    public function get_all_schedules(){
+
     }
 }
 

@@ -31,7 +31,7 @@ try{
                             $month = $jsonData["month"] ?? null;
                             $date = $jsonData["date"] ?? null;
 
-                            //$result["data"] = calendarOp::getData($year, $month, $date);
+                            $result["data"] = $cal->get_schedules($year, $month, $date);
                         }
                         else throw new Error("`year` property not found");
 

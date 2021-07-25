@@ -51,7 +51,7 @@ class EStructure {
                                 if (rplChild instanceof EStructure) {
                                     rplRes[i] = rplChild.createElement(replacements);
                                 }
-                                else if (rplChild !== null) {
+                                else if (!rplChild instanceof HTMLElement && !rplChild instanceof Node && rplChild !== null) {
                                     rplRes[i] = new EStructure(rplChild).createElement(replacements);
                                 }
                                 break;
@@ -124,15 +124,15 @@ class EStructure {
         }
 
         for (const styleName in this.style) {
-            result.style[styleName] = this.style[styleName];
+            result.style[styleName] = this.#replace(this.style[styleName]);
         }
 
         for (const attrName in this.attributes) {
-            result.setAttribute(attrName, this.attributes[attrName]);
+            result.setAttribute(attrName, this.#replace(this.attributes[attrName]));
         }
 
         for (const key in this.dataset) {
-            result.dataset[key] = this.dataset[key];
+            result.dataset[key] = this.#replace(this.dataset[key]);
         }
         
         for (const child of this.children) {
@@ -160,7 +160,12 @@ class EStructure {
                             }
                         }
                         else {
-                            result.innerHTML += replaced;
+                            const parent = result.cloneNode(false);
+                            parent.innerHTML += replaced;
+                            
+                            while(parent.childNodes.length > 0){
+                                result.appendChild(parent.childNodes[0]);
+                            }
                         }
 
                         break;

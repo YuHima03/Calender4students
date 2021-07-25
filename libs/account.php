@@ -68,8 +68,10 @@ class account{
         $this->login($userName, $pass, $autoLogin);
     }
 
-    public function getUUID() :?string{
-        return $this->uuid;
+    public function getUUID(bool $hex = false) :?string{
+        $uuid = $this->uuid;
+
+        return ($hex) ? bin2hex($uuid) : $uuid;
     }
 
     public function getEncryptKey() :?string{

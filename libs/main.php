@@ -36,6 +36,16 @@ function exitWithErrorPage(int $errorNum, bool $errorLog = true){
 }
 
 /**
+ * @param int|float|double $value
+ * @param int|float|double $from
+ * @param int|float|double $to
+ */
+function between($value, $from, $to, bool $equal = false) :bool {
+    if($equal) return $from <= $value && $value <= $to;
+    else return $from < $value && $value < $to;
+}
+
+/**
  * いろんなページへの相対パスの取得
  */
 class URI{
@@ -187,6 +197,25 @@ function rmdir_all(string $path) :bool{
 
 function isset_check($value, $default = null){
     return isset($value) ? $value : $default;
+}
+
+/**
+ * @param int|double $num
+ */
+function num2str($num, ?int $digit = null) :string {
+    $result = (string)$num;
+
+    if(!is_null($digit)){
+        if(preg_match("/\d{1}/", $result, $matches)){
+            $remain = $digit - sizeof($matches);
+
+            if($remain > 0){
+                $result = str_repeat("0", $remain) + $result;
+            }
+        }
+    }
+
+    return $result;
 }
 
 /**

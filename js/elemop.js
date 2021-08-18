@@ -229,6 +229,7 @@ class EStructure{
             }
         },
 
+        /**@param {HTMLElement} element */
         eventListener(element, value) {
             const typeerr_msg = "Valud of `eventListener` must be [array of] associative array of function";
 
@@ -242,7 +243,7 @@ class EStructure{
                             break;
                         case "function":
                             if (!Array.isArray(value)) {
-                                element.addEventListener(key, v);
+                                element.addEventListener(key, v, {capture: false});
                                 break;
                             }
                         default:
